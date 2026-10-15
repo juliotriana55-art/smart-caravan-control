@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#071321" />
+  <title>Smart Caravan Control</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#eef6ff;background:#071321;color-scheme:dark}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 80% 0%,#173451 0%,#071321 45%)}
+    .app{max-width:1100px;margin:auto;padding:24px 18px 50px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+    h1{font-size:clamp(1.65rem,4vw,2.5rem);margin:4px 0}h2{margin:0 0 16px;font-size:1.15rem}.muted{color:#9cb4c9}.eyebrow{color:#70d5ff;font-size:.85rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+    .pill{padding:9px 13px;border:1px solid #38536a;background:#132b40;border-radius:99px;font-size:.85rem}.pill b{color:#ffd78b}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{background:linear-gradient(145deg,#122a40,#0c2032);border:1px solid #29445c;border-radius:20px;padding:22px;min-width:0;box-shadow:0 12px 25px #02091222}
+    .metric{display:flex;align-items:center;justify-content:space-between;gap:8px}.number{font-size:clamp(1.8rem,5vw,2.9rem);font-weight:750;letter-spacing:-.04em;margin:16px 0 4px}.unit{font-size:1rem;color:#b8cadd}.accent{color:#72e6cc}.blue{color:#73cfff}.amber{color:#ffd17e}.bar{height:11px;border-radius:99px;background:#284056;overflow:hidden;margin-top:16px}.bar>span{height:100%;display:block;background:linear-gradient(90deg,#35cdb2,#81f4dd);border-radius:99px}
+    .wide{grid-column:1/-1}button,select,input{font:inherit}button{border:0;border-radius:12px;padding:12px 18px;background:#41cbb9;color:#04212a;font-weight:750;cursor:pointer}button.secondary{background:#28465c;color:#e9f5ff}button:disabled{opacity:.55;cursor:not-allowed}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #7ecfff;outline-offset:2px}
+    .flex{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.settings{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}.settings label{display:block;font-size:.82rem;color:#b5cbe0;margin-bottom:5px}.settings input,.settings select{width:100%;padding:11px;border:1px solid #466177;background:#0a1c2c;color:white;border-radius:10px}
+    .chat{border:1px solid #314b5e;border-radius:14px;background:#081827;min-height:90px;padding:15px;line-height:1.55;margin:15px 0}.small{font-size:.88rem;line-height:1.6}.notice{margin:0 0 20px;padding:12px 15px;background:#302714;color:#ffe3a4;border:1px solid #6e572a;border-radius:12px}.waterinfo{display:flex;justify-content:space-between}.footer{margin-top:22px;text-align:center;font-size:.8rem;color:#8ea9be}
+    @media(max-width:650px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.settings{grid-template-columns:1fr}.app{padding:16px 14px 35px}.card{padding:19px}}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div><div class="eyebrow">Your caravan, smarter</div><h1>🚐 Smart Caravan Control</h1><div class="muted">Your caravan at a glance</div></div>
+      <div class="pill">● <b>DEMO MODE</b> · No devices connected</div>
+    </header>
+    <p class="notice">⚠️ All readings are simulated. This demo does not connect to Victron, the inverter, water sensors, or any other caravan equipment.</p>
+    <section class="grid" aria-label="Caravan dashboard">
+      <article class="card"><div class="metric"><h2>🔋 Battery</h2><span class="accent">Demo</span></div><div class="number">84<span class="unit">%</span></div><div class="muted">12.8 V · Discharging 3.2 A</div><div class="bar" aria-label="Battery charge 84 percent"><span style="width:84%"></span></div></article>
+      <article class="card"><div class="metric"><h2>☀️ Solar</h2><span class="accent">Demo</span></div><div class="number blue">245<span class="unit">W</span></div><div class="muted">Solar input · Simulated production</div></article>
+      <article class="card"><div class="metric"><h2>⚡ Inverter</h2><span class="accent">Demo</span></div><div class="number">OFF</div><div class="muted">Status display only · No remote switching</div></article>
+      <article class="card"><div class="metric"><h2>🔌 AC Power</h2><span class="accent">Demo</span></div><div class="number amber">230<span class="unit">V</span></div><div class="muted">Simulated shore-power reading</div></article>
+      <article class="card wide"><div class="metric"><h2>💧 Water Tanks</h2><span class="muted">Demo · Sensors not connected</span></div><div class="waterinfo"><span>Fresh water</span><strong>65%</strong></div><div class="bar"><span style="width:65%"></span></div><p class="small muted">Tank readings require compatible sensors in a future version.</p></article>
+      <article class="card wide">
+        <div class="metric"><h2>🎙️ Charlie AI</h2><span class="accent">Assistant demo</span></div>
+        <div class="settings"><div><label for="assistantName">Assistant name</label><input id="assistantName" maxlength="28" value="Charlie" /></div><div><label for="language">Voice language</label><select id="language"><option value="en-AU">English (Australia)</option><option value="es-ES">Español</option></select></div></div>
+        <p class="small muted">Ask about the demo battery, solar, inverter, AC power or water. Speech functions depend on your browser permissions and available voices.</p>
+        <div class="flex"><button id="listen">🎤 Speak to Charlie</button><button class="secondary" id="batteryAsk">Ask about battery</button><button class="secondary" id="solarAsk">Ask about solar</button></div>
+        <div class="chat" id="reply" role="status" aria-live="polite">Hi! I'm Charlie. How can I help with your caravan today?</div>
+        <div class="small muted" id="status">Ready for a demo question.</div>
+      </article>
+    </section>
+    <p class="footer">Smart Caravan Control · Prototype v0.1 · No real hardware control</p>
+  </main>
+  <script>
+    const reply = document.getElementById('reply');
+    const status = document.getElementById('status');
+    const nameInput = document.getElementById('assistantName');
+    const language = document.getElementById('language');
+    const listen = document.getElementById('listen');
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    function speak(text){
+      if (!('speechSynthesis' in window)){status.textContent='Voice playback is not available in this browser.';return;}
+      speechSynthesis.cancel();
+      const utterance=new SpeechSynthesisUtterance(text);utterance.lang=language.value;utterance.rate=0.95;
+      const voices=speechSynthesis.getVoices();
+      const matching=voices.filter(v=>v.lang.toLowerCase()===language.value.toLowerCase());
+      const feminine=matching.find(v=>/female|karen|catherine|samantha|moira|serena|ava/i.test(v.name));
+      if(feminine)utterance.voice=feminine;else if(matching.length)utterance.voice=matching[0];
+      speechSynthesis.speak(utterance);
+    }
+    function respond(question){
+      const spanish=language.value.startsWith('es');const q=question.toLowerCase();let answer;
+      if(/battery|bater[ií]a|charge|carga/.test(q))answer=spanish?'En esta demostración, la batería está al 84 por ciento y a 12,8 voltios. No es una lectura real.':'In this demo, the battery is at 84 percent and 12.8 volts. This is not a live reading.';
+      else if(/solar|panel|sun|sol/.test(q))answer=spanish?'La producción solar simulada es de 245 vatios.':'The simulated solar output is 245 watts.';
+      else if(/water|agua|tank|tanque/.test(q))answer=spanish?'El tanque de agua limpia muestra un 65 por ciento simulado.':'The fresh water tank shows a simulated 65 percent level.';
+      else if(/inverter|inversor/.test(q))answer=spanish?'El inversor aparece apagado en esta demostración. Todavía no puedo controlarlo.':'The inverter is shown as off in this demo. I cannot control it yet.';
+      else if(/power|electric|230|volt|corriente|energ[ií]a/.test(q))answer=spanish?'Esta demostración muestra 230 voltios de alimentación de corriente alterna; no es una medición real.':'This demo displays 230 volts of AC power; it is not a real measurement.';
+      else answer=spanish?'Puedo explicar los valores simulados de batería, energía solar, inversor, corriente alterna y agua. Aún no estoy conectada a los equipos.':'I can explain the demo battery, solar, inverter, AC power, and water readings. I am not connected to the equipment yet.';
+      reply.textContent=(nameInput.value.trim()||'Charlie')+': '+answer;speak(answer);status.textContent='Answered using simulated dashboard data.';
+    }
+    document.getElementById('batteryAsk').addEventListener('click',()=>respond('battery'));
+    document.getElementById('solarAsk').addEventListener('click',()=>respond('solar'));
+    if(!Recognition){listen.disabled=true;status.textContent='Speech recognition is unavailable in this browser. Try the example buttons.';}
+    else listen.addEventListener('click',()=>{
+      const recognition=new Recognition();recognition.lang=language.value;recognition.interimResults=false;recognition.maxAlternatives=1;
+      recognition.onstart=()=>{status.textContent='Listening… Please speak now.';listen.disabled=true;};
+      recognition.onresult=e=>{const heard=e.results[0][0].transcript;status.textContent='You said: '+heard;respond(heard);};
+      recognition.onerror=e=>{status.textContent='Microphone error: '+e.error+'. Try the example buttons.';};
+      recognition.onend=()=>{listen.disabled=false;};
+      try{recognition.start();}catch(e){listen.disabled=false;status.textContent='Unable to start microphone. Try the example buttons.';}
+    });
+  </script>
+</body>
+</html>
