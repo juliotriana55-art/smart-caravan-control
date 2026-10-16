@@ -1,0 +1,10 @@
+{
+  "name": "smart-caravan-api",
+  "main": "./worker.js",
+  "compatibility_date": "2026-10-16",
+  "workers_dev": true,
+  "vars": {
+    "ALLOWED_ORIGIN": "https://juliotriana55-art.github.io",
+    "VRM_INSTALLATION_ID": "1013398"
+  }
+}
