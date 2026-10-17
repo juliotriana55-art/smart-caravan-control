@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#081724"><title>Caravan Studio · Smart Caravan Control</title>
+<style>
+:root{font:16px system-ui,-apple-system,sans-serif;color:#e8f5ff;background:#081724}*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 85% 0,#19445e,#081724 60%)}main{max-width:1050px;margin:auto;padding:24px 16px 60px}h1{font-size:clamp(1.8rem,4vw,2.7rem);margin:10px 0}h2{font-size:1.1rem}p,small{color:#b9cbd9;line-height:1.5}.pill{color:#83f4d9;letter-spacing:.1em;font-size:.8rem;font-weight:750}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{background:#122d40;border:1px solid #2a536a;border-radius:20px;padding:20px}.wide{grid-column:1/-1}label{display:block;margin:15px 0 5px;color:#cce1ed}input,select,textarea{width:100%;font:inherit;border:1px solid #4b778a;color:white;background:#071c2d;border-radius:10px;padding:12px}input[type=file]{padding:9px}button{background:#47dfc5;color:#04272d;border:0;border-radius:12px;padding:13px 17px;font:inherit;font-weight:800;cursor:pointer;margin:12px 9px 0 0}.secondary{background:#22485e;color:white}.preview{border-radius:17px;min-height:225px;display:grid;place-items:center;background:linear-gradient(#244e69,#102a3d);overflow:hidden}.preview svg{width:100%;max-height:290px}#photo{max-width:100%;max-height:280px;object-fit:contain;border-radius:12px;display:none}#notes{white-space:pre-wrap}a{color:#8deddb}@media(max-width:670px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}}:focus-visible{outline:3px solid #fff;outline-offset:3px}
+</style></head><body><main>
+<div class="pill">SMART CARAVAN CONTROL · DEVELOPMENT CONCEPT</div>
+<h1>🚐 Caravan Studio</h1>
+<p>Personalise your caravan’s digital profile. This is a local prototype: photos stay on this device. It does not scan or reconstruct a 3D model yet.</p>
+<div class="grid"><section class="card">
+<h2>Build your caravan profile</h2>
+<label for="brand">Manufacturer</label><input id="brand" placeholder="Royal Flair">
+<label for="model">Model / floorplan</label><input id="model" placeholder="e.g. Family 22 ft">
+<label for="body">Caravan style</label><select id="body"><option value="touring">Touring</option><option value="offroad">Off-road</option><option value="pop">Pop-top</option></select>
+<label for="tone">Exterior accent</label><select id="tone"><option value="#42dfc5">Teal</option><option value="#f4b15d">Sunset</option><option value="#81aaff">Blue</option><option value="#f06f82">Coral</option></select>
+<label for="solar">Solar panels</label><input id="solar" type="number" min="0" max="16" value="2">
+<label for="battery">Battery location</label><input id="battery" placeholder="Under the bed">
+<label for="heater">Diesel heater location</label><input id="heater" placeholder="Under the lounge">
+<label for="picture">Photo reference (optional)</label><input id="picture" type="file" accept="image/*" capture="environment">
+<button id="save">Save on this device</button><button id="reset" class="secondary">Clear profile</button>
+<small>No image is uploaded. Profile data is stored only in this browser on this device.</small>
+</section>
+<section class="card"><h2>Your digital caravan</h2>
+<div class="preview"><svg id="van" viewBox="0 0 760 330" role="img" aria-label="Customisable two-dimensional caravan illustration">
+<defs><linearGradient id="paint" x1="0" x2="1"><stop stop-color="#e5f3fa"/><stop offset="1" stop-color="#b6d2e0"/></linearGradient></defs>
+<path id="roof" d="M100 72 Q130 45 198 45 H606 Q653 48 678 106 L694 246 H80 L80 124 Q80 92 100 72Z" fill="url(#paint)" stroke="#8cbbc9" stroke-width="5"/>
+<path d="M83 204 H691" stroke="var(--accent,#42dfc5)" stroke-width="15"/>
+<rect x="173" y="102" width="154" height="93" rx="13" fill="#143d54" stroke="#71a4b6" stroke-width="5"/><rect x="352" y="102" width="116" height="93" rx="13" fill="#143d54" stroke="#71a4b6" stroke-width="5"/>
+<rect x="515" y="105" width="111" height="141" rx="8" fill="#b8d3e0" stroke="#729bad" stroke-width="6"/>
+<path d="M695 242 L752 265" stroke="#b8cbd8" stroke-width="8"/>
+<g fill="#101f30" stroke="#dce8ef" stroke-width="10"><circle cx="272" cy="251" r="47"/><circle cx="419" cy="251" r="47"/></g>
+<g id="solarPanels" fill="#152e45" stroke="#72d5e1" stroke-width="4"><rect x="275" y="47" width="94" height="12" rx="3"/><rect x="393" y="47" width="94" height="12" rx="3"/></g>
+<text id="vanLabel" x="110" y="179" font-size="24" font-weight="800" fill="#10394f">MY CARAVAN</text></svg></div>
+<h2>Photo reference</h2><div class="preview"><img id="photo" alt="Photo selected by the owner"><p id="photoPlaceholder">Select a caravan photo to preview it here</p></div>
+<h2>Jay AI · equipment briefing</h2><p id="notes" aria-live="polite"></p>
+<button id="brief">Generate my caravan briefing</button>
+</section></div>
+<p><a href="./index.html">← Return to Smart Caravan Control</a></p>
+</main><script>
+'use strict';
+const $=id=>document.getElementById(id),ids=['brand','model','body','tone','solar','battery','heater'],key='scc-caravan-studio-v1';
+function data(){return Object.fromEntries(ids.map(id=>[id,$(id).value]))}
+function render(){
+const d=data(),color=d.tone;$('van').style.setProperty('--accent',color);
+$('vanLabel').textContent=(d.brand||'MY CARAVAN').slice(0,19).toUpperCase();
+$('roof').setAttribute('d',d.body==='pop'?'M100 105 L100 68 L650 68 L678 108 L694 246 H80 V132Z':d.body==='offroad'?'M94 84 L138 45 H610 L677 104 L694 246 H80 L80 115Z':'M100 72 Q130 45 198 45 H606 Q653 48 678 106 L694 246 H80 L80 124 Q80 92 100 72Z');
+const count=Math.max(0,Math.min(16,Number(d.solar)||0));$('solarPanels').replaceChildren();
+for(let i=0;i<Math.min(4,count);i++){const r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',String(170+i*100));r.setAttribute('y','48');r.setAttribute('width','80');r.setAttribute('height','13');r.setAttribute('rx','3');$('solarPanels').append(r)}
+}
+function brief(){const d=data();$('notes').textContent=[
+(d.brand||'Your caravan')+(d.model?' · '+d.model:''),
+'Solar panels recorded: '+(d.solar||'not specified')+'.',
+'Battery location: '+(d.battery||'not recorded')+'.',
+'Diesel heater: '+(d.heater||'location not recorded')+'.',
+'This briefing uses your saved profile, not live Victron telemetry or generative AI.'
+].join('\n')}
+for(const id of ids)$(id).addEventListener('input',render);
+$('save').onclick=()=>{localStorage.setItem(key,JSON.stringify(data()));render();brief();$('save').textContent='Saved ✓';setTimeout(()=>$('save').textContent='Save on this device',1500)};
+$('reset').onclick=()=>{if(!confirm('Clear this prototype profile?'))return;localStorage.removeItem(key);location.reload()};
+$('brief').onclick=brief;
+$('picture').addEventListener('change',()=>{const f=$('picture').files[0];if(!f)return;if(!f.type.startsWith('image/'))return;if(window._photoUrl)URL.revokeObjectURL(window._photoUrl);window._photoUrl=URL.createObjectURL(f);$('photo').src=window._photoUrl;$('photo').style.display='block';$('photoPlaceholder').hidden=true});
+try{const saved=JSON.parse(localStorage.getItem(key)||'{}');for(const id of ids)if(saved[id]!==undefined)$(id).value=saved[id]}catch{}
+render();brief();
+</script></body></html>
