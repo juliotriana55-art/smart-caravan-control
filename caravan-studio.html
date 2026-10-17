@@ -19,7 +19,7 @@ body{margin:0;background:radial-gradient(circle at 85% 0,#19445e,#081724 60%)}ma
 <label for="heater">Diesel heater location</label><input id="heater" placeholder="Under the lounge">
 <label for="picture">Photo reference (optional)</label><input id="picture" type="file" accept="image/*">
 <button id="save">Save on this device</button><button id="reset" class="secondary">Clear profile</button>
-<small>No image is uploaded. Profile data is stored only in this browser on this device.</small>
+<small>Photo preview stays on this device and is not uploaded. Profile fields save to this browser; selected photos must be selected again after reloading.</small>
 </section>
 <section class="card"><h2>Your digital caravan</h2>
 <div class="preview" id="hero" style="position:relative;min-height:330px;background:radial-gradient(circle at 50% 35%,#32627d,#0a1c2b 72%);padding:18px;flex-direction:column;gap:12px">
@@ -36,7 +36,7 @@ body{margin:0;background:radial-gradient(circle at 85% 0,#19445e,#081724 60%)}ma
 'use strict';
 const $=id=>document.getElementById(id),ids=['brand','model','body','tone','solar','battery','heater'],key='scc-caravan-studio-v1';
 function data(){return Object.fromEntries(ids.map(id=>[id,$(id).value]))}
-function render(){const d=data();$('heroName').textContent=[d.brand,d.model].filter(Boolean).join(' · ')||'MY CARAVAN';$('hero').style.borderBottom='4px solid '+d.tone;}
+function render(){const d=data();$('heroName').textContent=[d.brand,d.model].filter(Boolean).join(' · ')||'MY CARAVAN';$('hero').style.borderBottom='4px solid '+d.tone;brief();}
 function brief(){const d=data();$('notes').textContent=[
 (d.brand||'Your caravan')+(d.model?' · '+d.model:''),
 'Solar panels recorded: '+(d.solar||'not specified')+'.',
