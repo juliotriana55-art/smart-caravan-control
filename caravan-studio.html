@@ -22,17 +22,12 @@ body{margin:0;background:radial-gradient(circle at 85% 0,#19445e,#081724 60%)}ma
 <small>No image is uploaded. Profile data is stored only in this browser on this device.</small>
 </section>
 <section class="card"><h2>Your digital caravan</h2>
-<div class="preview"><svg id="van" viewBox="0 0 760 330" role="img" aria-label="Customisable two-dimensional caravan illustration">
-<defs><linearGradient id="paint" x1="0" x2="1"><stop stop-color="#e5f3fa"/><stop offset="1" stop-color="#b6d2e0"/></linearGradient></defs>
-<path id="roof" d="M100 72 Q130 45 198 45 H606 Q653 48 678 106 L694 246 H80 L80 124 Q80 92 100 72Z" fill="url(#paint)" stroke="#8cbbc9" stroke-width="5"/>
-<path d="M83 204 H691" stroke="var(--accent,#42dfc5)" stroke-width="15"/>
-<rect x="173" y="102" width="154" height="93" rx="13" fill="#143d54" stroke="#71a4b6" stroke-width="5"/><rect x="352" y="102" width="116" height="93" rx="13" fill="#143d54" stroke="#71a4b6" stroke-width="5"/>
-<rect x="515" y="105" width="111" height="141" rx="8" fill="#b8d3e0" stroke="#729bad" stroke-width="6"/>
-<path d="M695 242 L752 265" stroke="#b8cbd8" stroke-width="8"/>
-<g fill="#101f30" stroke="#dce8ef" stroke-width="10"><circle cx="272" cy="251" r="47"/><circle cx="419" cy="251" r="47"/></g>
-<g id="solarPanels" fill="#152e45" stroke="#72d5e1" stroke-width="4"><rect x="275" y="47" width="94" height="12" rx="3"/><rect x="393" y="47" width="94" height="12" rx="3"/></g>
-<text id="vanLabel" x="110" y="179" font-size="24" font-weight="800" fill="#10394f">MY CARAVAN</text></svg></div>
-<h2>Photo reference</h2><div class="preview"><img id="photo" alt="Photo selected by the owner"><p id="photoPlaceholder">Select a caravan photo to preview it here</p></div>
+<div class="preview" id="hero" style="position:relative;min-height:330px;background:radial-gradient(circle at 50% 35%,#32627d,#0a1c2b 72%);padding:18px;flex-direction:column;gap:12px">
+<img id="photo" alt="Your caravan photo" style="display:none;width:100%;height:auto;max-height:370px;object-fit:contain;filter:drop-shadow(0 16px 18px #0008)">
+<div id="photoPlaceholder" style="text-align:center;padding:48px 12px"><strong>📷 Your caravan, not a generic drawing</strong><p>Select a photo above to showcase your actual caravan here.</p></div>
+<div id="heroName" style="font-weight:800;letter-spacing:.06em;color:#96f4e3"></div>
+</div>
+<small>Premium photo display preview. Background removal and AI 3D reconstruction are not yet available in this version.</small>
 <h2>Jay AI · equipment briefing</h2><p id="notes" aria-live="polite"></p>
 <button id="brief">Generate my caravan briefing</button>
 </section></div>
@@ -41,13 +36,7 @@ body{margin:0;background:radial-gradient(circle at 85% 0,#19445e,#081724 60%)}ma
 'use strict';
 const $=id=>document.getElementById(id),ids=['brand','model','body','tone','solar','battery','heater'],key='scc-caravan-studio-v1';
 function data(){return Object.fromEntries(ids.map(id=>[id,$(id).value]))}
-function render(){
-const d=data(),color=d.tone;$('van').style.setProperty('--accent',color);
-$('vanLabel').textContent=(d.brand||'MY CARAVAN').slice(0,19).toUpperCase();
-$('roof').setAttribute('d',d.body==='pop'?'M100 105 L100 68 L650 68 L678 108 L694 246 H80 V132Z':d.body==='offroad'?'M94 84 L138 45 H610 L677 104 L694 246 H80 L80 115Z':'M100 72 Q130 45 198 45 H606 Q653 48 678 106 L694 246 H80 L80 124 Q80 92 100 72Z');
-const count=Math.max(0,Math.min(16,Number(d.solar)||0));$('solarPanels').replaceChildren();
-for(let i=0;i<Math.min(4,count);i++){const r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',String(170+i*100));r.setAttribute('y','48');r.setAttribute('width','80');r.setAttribute('height','13');r.setAttribute('rx','3');$('solarPanels').append(r)}
-}
+function render(){const d=data();$('heroName').textContent=[d.brand,d.model].filter(Boolean).join(' · ')||'MY CARAVAN';$('hero').style.borderBottom='4px solid '+d.tone;}
 function brief(){const d=data();$('notes').textContent=[
 (d.brand||'Your caravan')+(d.model?' · '+d.model:''),
 'Solar panels recorded: '+(d.solar||'not specified')+'.',
