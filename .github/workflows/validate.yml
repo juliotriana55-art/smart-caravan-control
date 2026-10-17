@@ -1,0 +1,23 @@
+name: Validate Smart Caravan Control
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate application
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
