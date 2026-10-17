@@ -1,0 +1,21 @@
+name: VRM Offline Regression Tests
+
+on:
+  push:
+    branches:
+      - feature/vrm-offline-snapshot-20261017
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vrm-offline-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check VRM offline logic (no secrets or network required)
+        run: node --test experiments/vrm-offline/freshness.test.mjs
