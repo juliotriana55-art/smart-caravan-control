@@ -1,0 +1,1 @@
+Pilot checklist: inspect labels for simulated, offline, stale and recovered data. Verify no live control actions.
