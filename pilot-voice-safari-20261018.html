@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Jay AI Voice Lab — Safari</title>
+<style>body{font:16px system-ui;background:#0b2130;color:#e9f8ff;max-width:650px;margin:24px auto;padding:16px}button,input,select{font:inherit;border-radius:10px;padding:12px;margin:5px 0}button{background:#4bdcc4;border:0;color:#062a30;font-weight:bold}button.secondary{background:#28495e;color:#fff}input,select{background:#193b4f;color:#fff;border:1px solid #547c90;max-width:100%;box-sizing:border-box}input{width:100%}section{background:#153447;border-radius:16px;padding:15px;margin:14px 0}#answer,#status{white-space:pre-wrap}small{color:#c3d7e3}label{display:block;margin:8px 0}h1{font-size:1.6rem}</style></head><body>
+<h1>🎙️ Jay AI — Voice Lab</h1>
+<p>Standalone Safari microphone and speech playback test. Responses are local and scripted, <strong>not generative AI</strong>. No data is uploaded.</p>
+<section><label for="locale">Language</label><select id="locale"><option value="en-AU">English (Australia)</option><option value="es-ES">Español</option></select><label for="question">Recognised question</label><input id="question" autocomplete="off" placeholder="Say or type a question"><button id="talk">🎙️ Talk</button> <button id="ask" class="secondary">Ask by text</button><button id="speak" class="secondary">🔊 Speak last answer</button><label><input type="checkbox" id="auto"> Speak automatically after recognition (may be blocked on iOS)</label><p id="status" role="status">Ready. Tap Talk to start.</p></section>
+<section><h2>Jay AI response</h2><p id="answer" aria-live="polite">No question yet.</p><h2>Session history</h2><div id="history"></div><button id="clear" class="secondary">Clear history</button></section>
+<section><h2>Device diagnostic</h2><p id="support"></p><p><small>Test Talk → answer → Talk again. If automatic playback is silent, tap Speak last answer. A browser may require microphone permission for every session.</small></p></section>
+<script>
+'use strict';
+const el=id=>document.getElementById(id);
+const Rec=window.SpeechRecognition||window.webkitSpeechRecognition;
+el('support').textContent='SpeechRecognition: '+(Rec?'available':'unavailable')+'; SpeechSynthesis: '+('speechSynthesis'in window?'available':'unavailable')+'.';
+let current=null,last='',turn=0;
+const key='scc-voice-lab-20261018';
+function read(){try{const a=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(a)?a.slice(-10):[]}catch{return []}}
+function draw(){el('history').replaceChildren();for(const item of read().reverse()){const p=document.createElement('p');p.textContent=item;el('history').append(p)}}
+function answer(){const q=el('question').value.trim();if(!q)return;turn++;const es=el('locale').value==='es-ES';last=es?'Recibí tu pregunta número '+turn+'. Este es un prototipo de voz, no una respuesta inteligente.':'I received question number '+turn+'. This is a voice test, not an intelligent answer.';el('answer').textContent=last;try{localStorage.setItem(key,JSON.stringify([...read(),q+' → '+last].slice(-10)))}catch{}draw()}
+function speak(){if(!last||!('speechSynthesis'in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(last);u.lang=el('locale').value;u.rate=.95;u.onstart=()=>el('status').textContent='Speaking…';u.onend=()=>el('status').textContent='Ready for another question.';u.onerror=()=>el('status').textContent='Speech playback failed. Try Speak again.';speechSynthesis.speak(u)}catch{el('status').textContent='Speech playback unavailable.'}}
+el('talk').onclick=()=>{if(!Rec){el('status').textContent='Speech recognition unavailable. Use text.';return}if(current){const prev=current;current=null;try{prev.abort()}catch{}el('status').textContent='Stopped previous session. Tap Talk again.';return}
+const r=new Rec();current=r;r.lang=el('locale').value;r.interimResults=false;r.continuous=false;el('status').textContent='Listening…';
+r.onresult=e=>{if(current!==r)return;const transcript=String(e.results?.[0]?.[0]?.transcript||'').trim();current=null;try{r.stop()}catch{};if(!transcript){el('status').textContent='No words recognised. Tap Talk again.';return}el('question').value=transcript;answer();el('status').textContent='Recognised. Ready for another question.';if(el('auto').checked)speak()};
+r.onerror=e=>{if(current!==r)return;current=null;el('status').textContent='Microphone error: '+e.error+'. Tap Talk to retry.'};
+r.onend=()=>{if(current!==r)return;current=null;el('status').textContent='Microphone stopped. Tap Talk to retry.'};
+try{r.start()}catch{current=null;el('status').textContent='Microphone could not start. Tap Talk again.'}};
+el('ask').onclick=answer;el('question').onkeydown=e=>{if(e.key==='Enter')answer()};
+el('speak').onclick=speak;el('locale').onchange=()=>{const old=current;current=null;if(old)try{old.abort()}catch{};if('speechSynthesis'in window)speechSynthesis.cancel()};
+el('clear').onclick=()=>{try{localStorage.removeItem(key)}catch{}draw()};draw();
+</script></body></html>
