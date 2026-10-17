@@ -44,7 +44,7 @@ function voiceStatus(msg){$('voiceStatus').textContent=msg}
 function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N} ]/gu,' ').replace(/\s+/g,' ').trim()}
 function wakeName(){return 'jay'}
 function changeWakeUI(){const b=$('wakeToggle');b.textContent=wakeEnabled?(st.speechLang==='es-ES'?'⏹ Desactivar escucha':'⏹ Stop wake listening'):(st.speechLang==='es-ES'?'🎙️ Activar Jay':'🎙️ Activate Jay');b.setAttribute('aria-pressed',String(wakeEnabled))}
-let speechWatchdog=null, restartTimer=null, restartAttempts=0;
+let speechWatchdog=null, restartTimer=null, restartAttempts=0, activeUtterance=null;
 function queueRecognition(delay=850){clearTimeout(restartTimer);if(!wakeEnabled||document.hidden)return;restartTimer=setTimeout(()=>{if(wakeEnabled&&!speaking&&!recognizer&&!recognizing)startRecognition()},delay)}
 function speak(s){
   lastSpoken=s;
@@ -57,15 +57,30 @@ function speak(s){
   u.lang=st.speechLang;u.rate=0.95;
   const voices=speechSynthesis.getVoices();
   u.voice=voices.find(v=>v.lang.toLowerCase()===u.lang.toLowerCase()&&/female|samantha|karen|ava|catherine|moira|serena/i.test(v.name))||voices.find(v=>v.lang.toLowerCase()===u.lang.toLowerCase())||null;
-  let finished=false;
-  function done(err){if(finished)return;finished=true;clearTimeout(speechWatchdog);speaking=false;
-    if(err)voiceStatus(st.speechLang==='es-ES'?'Safari no pudo hablar automáticamente. Prueba tocar Activar Jay otra vez.':'Safari could not play the voice. Tap Voice to test sound or try Activate Jay again.');
+  let finished=false, started=false;
+  function done(err){
+    if(finished)return;
+    finished=true;
+    clearTimeout(speechWatchdog);
+    if(activeUtterance!==u)return; // Ignore late callbacks from a previous reply.
+    activeUtterance=null;
+    speaking=false;
+    if(err){
+      try{speechSynthesis.cancel()}catch{}
+      voiceStatus(st.speechLang==='es-ES'?'Safari no pudo reproducir la voz. Toca Activar Jay para volver a intentarlo.':'Safari could not play the voice. Tap Activate Jay to try again.');
+    }
     queueRecognition(1000);
   }
   u.onend=()=>done(false);
-  u.onerror=e=>done(true);
-  u.onstart=()=>voiceStatus(st.speechLang==='es-ES'?'Jay está hablando…':'Jay is speaking…');
-  try{speechSynthesis.resume();speechSynthesis.speak(u);speechWatchdog=setTimeout(()=>done(true),Math.max(7000,Math.min(24000,s.length*100)))}catch{done(true)}
+  u.onerror=()=>done(true);
+  u.onstart=()=>{started=true;voiceStatus(st.speechLang==='es-ES'?'Jay está hablando…':'Jay is speaking…')};
+  activeUtterance=u;
+  try{
+    speechSynthesis.resume();
+    speechSynthesis.speak(u);
+    // Recover if Safari never emits onstart/onend; don't lock subsequent questions.
+    speechWatchdog=setTimeout(()=>done(true),Math.max(12000,Math.min(45000,s.length*170)));
+  }catch{done(true)}
 }
 function fill(s,fields){return s.replace(/\{(\w+)\}/g,(_,k)=>String(fields[k]??'—'))}
 function answer(raw){readProfile();const q=norm(raw),lang=st.speechLang.slice(0,2),es=lang==='es',tt=k=>t(k,lang),d=st.mode==='demo'?{soc:84,voltage:12.8,current:-3.2,solarWatts:245,inverter:'off',waterPct:65}:st.data||{};
