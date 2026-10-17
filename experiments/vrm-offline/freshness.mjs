@@ -7,6 +7,16 @@ export const MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
 export const METRIC_KEYS = Object.freeze(['soc', 'voltage', 'current', 'solarWatts', 'dcPower', 'waterPct']);
 export const VALID_INVERTER = Object.freeze(['on', 'off']);
 
+/**
+ * VRM timestamps must identify an unambiguous instant. JavaScript Date.parse()
+ * accepts timezone-less local times, which vary between Safari devices and CI.
+ * Reject them rather than risk marking an old reading as fresh.
+ */
+export function parseSourceTimestamp(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return NaN;
+  return Date.parse(value);
+}
+
 export function sanitizeMetrics(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
   const cleaned = {};
@@ -24,7 +34,7 @@ export function sanitizeMetrics(data) {
 export function assessReading({ mode = 'vrm', data = null, updated = null, transportOk = false, now = Date.now() } = {}) {
   if (mode === 'demo') return { status: 'demo', ageMs: null, isLive: false };
   if (!sanitizeMetrics(data)) return { status: transportOk ? 'waiting' : 'error', ageMs: null, isLive: false };
-  const timestamp = typeof updated === 'string' ? Date.parse(updated) : NaN;
+  const timestamp = parseSourceTimestamp(updated);
   const validTimestamp = Number.isFinite(timestamp) && timestamp <= now + MAX_FUTURE_SKEW_MS;
   const ageMs = validTimestamp ? Math.max(0, now - timestamp) : null;
   if (!transportOk) return { status: 'offline', ageMs, isLive: false };
@@ -43,7 +53,7 @@ export function snapshotFromVerifiedResponse(response, checkedAt = Date.now()) {
   if (!/^\d+$/.test(installationId)) return null;
   const data = sanitizeMetrics(response.data);
   if (!data) return null;
-  const updated = typeof response.updated === 'string' && Number.isFinite(Date.parse(response.updated))
+  const updated = Number.isFinite(parseSourceTimestamp(response.updated))
     ? response.updated : null;
   return { version: 1, installationId, data, updated, checkedAt };
 }
@@ -55,7 +65,7 @@ export function restoreSnapshot(raw, expectedInstallationId) {
     if (!/^\d+$/.test(String(expectedInstallationId))) return null;
     const data = sanitizeMetrics(value.data);
     if (!data) return null;
-    const updated = typeof value.updated === 'string' && Number.isFinite(Date.parse(value.updated)) ? value.updated : null;
+    const updated = Number.isFinite(parseSourceTimestamp(value.updated)) ? value.updated : null;
     const checkedAt = Number.isFinite(value.checkedAt) ? value.checkedAt : null;
     return { version: 1, installationId: String(expectedInstallationId), data, updated, checkedAt };
   } catch {
