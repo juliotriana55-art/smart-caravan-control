@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#081724"><title>Caravan Studio · Smart Caravan Control</title>
+<style>
+:root{font:16px system-ui,-apple-system,sans-serif;color:#e8f5ff;background:#081724}*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 85% 0,#19445e,#081724 60%)}main{max-width:1050px;margin:auto;padding:24px 16px 60px}h1{font-size:clamp(1.8rem,4vw,2.7rem);margin:10px 0}h2{font-size:1.1rem}p,small{color:#b9cbd9;line-height:1.5}.pill{color:#83f4d9;letter-spacing:.1em;font-size:.8rem;font-weight:750}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{background:#122d40;border:1px solid #2a536a;border-radius:20px;padding:20px}.wide{grid-column:1/-1}label{display:block;margin:15px 0 5px;color:#cce1ed}input,select,textarea{width:100%;font:inherit;border:1px solid #4b778a;color:white;background:#071c2d;border-radius:10px;padding:12px}input[type=file]{padding:9px}button{background:#47dfc5;color:#04272d;border:0;border-radius:12px;padding:13px 17px;font:inherit;font-weight:800;cursor:pointer;margin:12px 9px 0 0}.secondary{background:#22485e;color:white}.preview{border-radius:17px;min-height:225px;display:grid;place-items:center;background:linear-gradient(#244e69,#102a3d);overflow:hidden}.preview svg{width:100%;max-height:290px}#photo{max-width:100%;max-height:280px;object-fit:contain;border-radius:12px;display:none}#notes{white-space:pre-wrap}a{color:#8deddb}@media(max-width:670px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}}:focus-visible{outline:3px solid #fff;outline-offset:3px}
+</style></head><body><main>
+<div class="pill">SMART CARAVAN CONTROL · DEVELOPMENT CONCEPT</div>
+<h1>🚐 Caravan Studio</h1>
+<p>Personalise your caravan’s digital profile. This is a local prototype: photos stay on this device. It does not scan or reconstruct a 3D model yet.</p>
+<div class="grid"><section class="card">
+<h2>Build your caravan profile</h2>
+<label for="brand">Manufacturer</label><input id="brand" placeholder="Royal Flair">
+<label for="model">Model / floorplan</label><input id="model" placeholder="e.g. Family 22 ft">
+<label for="body">Caravan style</label><select id="body"><option value="touring">Touring</option><option value="offroad">Off-road</option><option value="pop">Pop-top</option></select>
+<label for="tone">Exterior accent</label><select id="tone"><option value="#42dfc5">Teal</option><option value="#f4b15d">Sunset</option><option value="#81aaff">Blue</option><option value="#f06f82">Coral</option></select>
+<label for="solar">Solar panels</label><input id="solar" type="number" min="0" max="16" value="2">
+<label for="battery">Battery location</label><input id="battery" placeholder="Under the bed">
+<label for="heater">Diesel heater location</label><input id="heater" placeholder="Under the lounge">
+<label for="picture">Photo reference (optional)</label><input id="picture" type="file" accept="image/*">
+<button id="save">Save on this device</button><button id="reset" class="secondary">Clear profile</button>
+<small>Photo preview stays on this device and is not uploaded. Profile fields save to this browser; selected photos must be selected again after reloading.</small>
+</section>
+<section class="card"><h2>Your digital caravan</h2>
+<div class="preview" id="hero" style="position:relative;min-height:330px;background:radial-gradient(circle at 50% 35%,#32627d,#0a1c2b 72%);padding:18px;flex-direction:column;gap:12px">
+<img id="photo" alt="Your caravan photo" style="display:none;width:100%;height:auto;max-height:370px;object-fit:contain;filter:drop-shadow(0 16px 18px #0008)">
+<div id="photoPlaceholder" style="text-align:center;padding:48px 12px"><strong>📷 Your caravan, not a generic drawing</strong><p>Select a photo above to showcase your actual caravan here.</p></div>
+<div id="heroName" style="font-weight:800;letter-spacing:.06em;color:#96f4e3"></div>
+</div>
+<small>Premium photo display preview. Background removal and AI 3D reconstruction are not yet available in this version.</small>
+<h2>Jay AI · equipment briefing</h2><p id="notes" aria-live="polite"></p>
+<button id="brief">Generate my caravan briefing</button>
+</section></div>
+<p><a href="./index.html">← Return to Smart Caravan Control</a></p>
+</main><script>
+'use strict';
+const $=id=>document.getElementById(id),ids=['brand','model','body','tone','solar','battery','heater'],key='scc-caravan-studio-v1';
+function data(){return Object.fromEntries(ids.map(id=>[id,$(id).value]))}
+function render(){const d=data();$('heroName').textContent=[d.brand,d.model].filter(Boolean).join(' · ')||'MY CARAVAN';$('hero').style.borderBottom='4px solid '+d.tone;brief();}
+function brief(){const d=data();$('notes').textContent=[
+(d.brand||'Your caravan')+(d.model?' · '+d.model:''),
+'Solar panels recorded: '+(d.solar||'not specified')+'.',
+'Battery location: '+(d.battery||'not recorded')+'.',
+'Diesel heater: '+(d.heater||'location not recorded')+'.',
+'This briefing uses your saved profile, not live Victron telemetry or generative AI.'
+].join('\n')}
+for(const id of ids)$(id).addEventListener('input',render);
+$('save').onclick=()=>{localStorage.setItem(key,JSON.stringify(data()));render();brief();$('save').textContent='Saved ✓';setTimeout(()=>$('save').textContent='Save on this device',1500)};
+$('reset').onclick=()=>{if(!confirm('Clear this prototype profile?'))return;localStorage.removeItem(key);location.reload()};
+$('brief').onclick=brief;
+$('picture').addEventListener('change',()=>{const f=$('picture').files[0];if(!f)return;if(!f.type.startsWith('image/'))return;if(window._photoUrl)URL.revokeObjectURL(window._photoUrl);window._photoUrl=URL.createObjectURL(f);$('photo').src=window._photoUrl;$('photo').style.display='block';$('photoPlaceholder').hidden=true});
+try{const saved=JSON.parse(localStorage.getItem(key)||'{}');for(const id of ids)if(saved[id]!==undefined)$(id).value=saved[id]}catch{}
+render();brief();
+</script></body></html>
