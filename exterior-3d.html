@@ -64,6 +64,21 @@ function build(){
  }
  // Service hatches, exterior outlets, vents and amber clearance lights.
  const hatch=mat('#171d22'),vent=mat('#48545b'),amberSide=mat('#de8c20');
+ // Repeating pressed-metal tread pattern, inspired by the black exterior cladding.
+ const tc=document.createElement('canvas');tc.width=128;tc.height=128;
+ const ctx=tc.getContext('2d');ctx.fillStyle='#202428';ctx.fillRect(0,0,128,128);
+ for(let row=0;row<6;row++)for(let col=0;col<6;col++){
+  ctx.save();ctx.translate(col*26+(row%2)*13,row*24);ctx.rotate(-Math.PI/4);
+  ctx.fillStyle='#41484c';ctx.fillRect(-9,-2,18,4);
+  ctx.fillStyle='#687074';ctx.fillRect(-7,-2,14,1);ctx.restore();
+ }
+ const tex=new T.CanvasTexture(tc);tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.repeat.set(Math.max(5,l),2);
+ const tread=new T.MeshStandardMaterial({map:tex,roughness:.69,metalness:.22,side:T.DoubleSide});
+ for(const side of [-1,1]){
+  const z=side*(w/2+.175);
+  sidePanel([[left+.36,base+.13],[right-.27,base+.13],[right-.18,base+.36],[right-.18,base+.69],[left+.18,base+.69]],z,tread);
+ }
+
  for(const sign of [-1,1]){
   const side=sign*w/2,outer=sign*(w/2+.24);
   const accessN=Math.max(0,Math.min(4,Number($('accessDoors').value)||0));
@@ -137,8 +152,15 @@ function build(){
  // Tandem wheels with silver hubcaps
  const axles=Number($('axles').value);for(let a=0;a<axles;a++)for(const z of [-w/2-.17,w/2+.17]){const x=-l*.18+(a-(axles-1)/2)*.85;
   cylinder(.47,.24,x,.50,z,rubber,Math.PI/2);
-  cylinder(.25,.255,x,.50,z,silver,Math.PI/2);
-  cylinder(.08,.265,x,.50,z,trim,Math.PI/2);
+  cylinder(.29,.257,x,.50,z,trim,Math.PI/2);
+  cylinder(.225,.268,x,.50,z,mat('#434a50',.65),Math.PI/2);
+  for(let i=0;i<8;i++){
+   const a=i*Math.PI/4;
+   const bolt=new T.Mesh(new T.SphereGeometry(.028,8,6),silver);
+   bolt.position.set(x+Math.cos(a)*.175,.50+Math.sin(a)*.175,z+(z>0?.145:-.145));
+   group.add(bolt);
+  }
+  cylinder(.075,.276,x,.50,z,silver,Math.PI/2);
  }
  // Royal Flair-style folding entry step: 1 or 2 treads, never three.
  const doorX=l*.08,ladderZ=-w/2,stepCount=Number($('steps').value);
@@ -160,6 +182,15 @@ function build(){
  if($('gas').checked)for(const z of [-.32,.32]){cylinder(.20,.51,right+.90,base+.38,z,silver);cylinder(.12,.08,right+.90,base+.68,z,trim)}
  // Optional spare wheel on the rear bumper.
  if($('spare').checked){const wheel=new T.Mesh(new T.TorusGeometry(.40,.15,12,32),rubber);wheel.rotation.y=Math.PI/2;wheel.position.set(left-.68,base+1.13,0);group.add(wheel);cylinder(.24,.13,left-.68,base+1.13,0,silver,Math.PI/2); }
+ // Visible underbody chassis beams and corner stabilisers.
+ for(const z of [-w*.30,w*.30]){
+  box(l*.92,.14,.12,0,.52,z,trim);
+  for(const x of [left+.65,right-.75]){
+   box(.10,.37,.12,x,.33,z,trim);
+   box(.31,.045,.24,x,.14,z,trim);
+  }
+ }
+ for(const x of [-l*.34,l*.30])box(.12,.11,w*.65,x,.50,0,trim);
  // Drawbar A-frame and jockey wheel at the nose (positive X)
  for(const z of [-.55,.55]){const arm=box(1.65,.12,.11,right+.64,.68,z/2,trim);arm.rotation.y=(z>0?-.23:.23)}
  box(.5,.15,.24,right+1.38,.67,0,silver);cylinder(.14,.10,right+1.30,.20,0,rubber,Math.PI/2);
@@ -173,6 +204,11 @@ function build(){
   for(const strap of [-.32,.32])box(.065,.30,w*.66,x+strap*tankL,.39,0,tankBand);
   box(.16,.08,.16,x,.19,-w*.24,pipe);
   cylinder(.07,.10,x,.14,-w*.25,pipe);
+ }
+ // Low-profile roof skylights.
+ for(const x of [left+1.35,right-1.40]){
+  box(.56,.08,.49,x,top+.10,0,trim);
+  box(.46,.035,.39,x,top+.15,0,glass);
  }
  // Ground plane, soft shadow
  const ground=new T.Mesh(new T.PlaneGeometry(40,40),new T.MeshStandardMaterial({color:'#edf0f0',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.06;ground.receiveShadow=true;group.add(ground);
@@ -218,7 +254,7 @@ function end(e){pointers.delete(e.pointerId);lastPinch=distanceBetweenPointers()
 for(const type of ['pointerup','pointercancel','lostpointercapture'])v.addEventListener(type,end);
 v.addEventListener('wheel',e=>{e.preventDefault();dist=Math.max(7,Math.min(32,dist+Math.sign(e.deltaY)));draw()},{passive:false});
 $('front').onclick=()=>{yaw=0;pitch=.12;draw()};$('side').onclick=()=>{yaw=-Math.PI/2;pitch=.15;draw()};$('rear').onclick=()=>{yaw=Math.PI;pitch=.12;draw()};$('roof').onclick=()=>{pitch=1.32;draw()};$('reset').onclick=()=>{yaw=-.68;pitch=.24;dist=15;draw()};$('build').onclick=build;
-const ids=['length','width','height','bodyColor','stripeColor','solarPanels','brand','customBrand','windowsLeft','windowsRight','axles','awning','gas','spare','frontBox'];
+const ids=['length','width','height','bodyColor','stripeColor','solarPanels','brand','customBrand','windowsLeft','windowsRight','accessDoors','waterTanks','axles','steps','awning','gas','spare','frontBox'];
 try{const stored=JSON.parse(localStorage.getItem('scc-exterior-3d-config-v1')||'null');if(stored)for(const id of ids){if(stored[id]===undefined)continue;const el=$(id);if(el.type==='checkbox')el.checked=Boolean(stored[id]);else el.value=stored[id]}}catch(e){$('saveStatus').textContent='No se pudo leer el diseño anterior.'}
 $('restore').onclick=()=>{try{localStorage.removeItem('scc-exterior-3d-config-v1')}catch(e){}location.reload()};
 build();
