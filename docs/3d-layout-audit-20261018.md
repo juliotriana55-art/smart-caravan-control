@@ -7,3 +7,4 @@
 - Keep production main and Victron Worker untouched.
 
 The current exterior is a demonstration mesh, not a photogrammetric reconstruction.
+- QA gate: reject unverified side accessories and any collision with the entrance.
