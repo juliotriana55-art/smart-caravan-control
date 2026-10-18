@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smart Caravan — Exterior 3D</title><style>body{margin:0;background:#edf2f4;color:#193143;font:16px system-ui}main{max-width:1000px;margin:auto;padding:15px}h1{font-size:1.45rem}.sub{color:#516b78;line-height:1.5}.panel{background:white;border:1px solid #d2dfe4;border-radius:18px;padding:12px;margin:12px 0;box-shadow:0 7px 30px #0d304018}#view{height:480px;max-height:68vh;touch-action:none;overflow:hidden;border-radius:14px;background:#f7f9fa}button,input{font:inherit;border-radius:10px;padding:11px;border:1px solid #b4cbd1}button{background:#0a817b;color:white;border:0;margin:4px;font-weight:650;min-height:44px}input{width:85px}label{display:inline-flex;gap:8px;align-items:center;margin:6px}.small{font-size:.88rem;color:#57717d}#status{font-weight:650;color:#345a65}a{color:#086f72}</style></head><body><main><h1>🚐 Smart Caravan — Exterior 3D</h1><p class="sub">Modelo exterior interactivo con carrocería perfilada, ventanas, puerta, doble eje, techo y lanza. Gira con el dedo y pellizca para acercar. <strong>Es un modelo paramétrico de demostración, no una reconstrucción automática de tus fotografías.</strong></p><section class="panel"><div id="view" aria-label="Visor 3D de caravana exterior"></div><p id="status" role="status">Iniciando visor 3D…</p><button id="front">Frontal</button><button id="side">Lateral</button><button id="rear">Trasera</button><button id="roof">Techo</button><button id="reset">Vista inicial</button></section><section class="panel"><strong>Personalizar proporciones</strong><div><label>Largo (m) <input id="length" type="number" min="5" max="10" step=".1" value="7.2"></label><label>Ancho (m) <input id="width" type="number" min="2" max="3" step=".1" value="2.4"></label><label>Alto (m) <input id="height" type="number" min="2.2" max="3.4" step=".1" value="2.7"></label></div><button id="build">Actualizar</button><p class="small">Los detalles son ilustrativos y editables. Las fotos cargadas en la app no se utilizan para reconstruir esta geometría.</p></section><p><a href="./pilot-5.html">← Regresar a Smart Caravan Control</a></p></main><script type="module">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smart Caravan — Exterior 3D</title><style>body{margin:0;background:#edf2f4;color:#193143;font:16px system-ui}main{max-width:1000px;margin:auto;padding:15px}h1{font-size:1.45rem}.sub{color:#516b78;line-height:1.5}.panel{background:white;border:1px solid #d2dfe4;border-radius:18px;padding:12px;margin:12px 0;box-shadow:0 7px 30px #0d304018}#view{height:480px;max-height:68vh;touch-action:none;overflow:hidden;border-radius:14px;background:#f7f9fa}button,input{font:inherit;border-radius:10px;padding:11px;border:1px solid #b4cbd1}button{background:#0a817b;color:white;border:0;margin:4px;font-weight:650;min-height:44px}input{width:85px}label{display:inline-flex;gap:8px;align-items:center;margin:6px}.small{font-size:.88rem;color:#57717d}#status{font-weight:650;color:#345a65}a{color:#086f72}</style></head><body><main><h1>🚐 Smart Caravan — Exterior 3D</h1><p class="sub">Modelo exterior interactivo con carrocería perfilada, ventanas, puerta, doble eje, techo y lanza. Gira con el dedo y pellizca para acercar. <strong>Es un modelo paramétrico de demostración, no una reconstrucción automática de tus fotografías.</strong></p><section class="panel"><div id="view" aria-label="Visor 3D de caravana exterior"></div><p id="status" role="status">Iniciando visor 3D…</p><button id="front">Frontal</button><button id="side">Lateral</button><button id="rear">Trasera</button><button id="roof">Techo</button><button id="reset">Vista inicial</button></section><section class="panel"><strong>Personalizar proporciones</strong><div><label>Largo (m) <input id="length" type="number" min="5" max="10" step=".1" value="7.2"></label><label>Ancho (m) <input id="width" type="number" min="2" max="3" step=".1" value="2.4"></label><label>Alto (m) <input id="height" type="number" min="2.2" max="3.4" step=".1" value="2.7"></label></div><div><label>Color carrocería <input id="bodyColor" type="color" value="#f4f6f5"></label><label>Color de franjas <input id="stripeColor" type="color" value="#c34e5a"></label><label>Paneles solares <input id="solarPanels" type="number" min="0" max="12" step="1" value="3"></label></div><label>Marca / sticker <select id="brand"><option value="Royal Flair">Royal Flair</option><option value="Custom">Personalizada</option><option value="None">Sin marca</option></select></label><label>Nombre personalizado <input id="customBrand" type="text" maxlength="28" placeholder="Mi marca" style="width:155px"></label><button id="build">Actualizar</button><p class="small">Los detalles son ilustrativos y editables. Las fotos cargadas en la app no se utilizan para reconstruir esta geometría.</p></section><p><a href="./pilot-5.html">← Regresar a Smart Caravan Control</a></p></main><script type="module">
 const $=id=>document.getElementById(id),status=$('status');let T,scene,camera,renderer,group,yaw=.68,pitch=.24,dist=15,drag=null,pointers=new Map();
 try{
 T=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/+esm');
@@ -16,6 +16,9 @@ function draw(){
  camera.position.set(Math.cos(yaw)*Math.cos(pitch)*dist,2+Math.sin(pitch)*dist,Math.sin(yaw)*Math.cos(pitch)*dist);camera.lookAt(0,1.8,0);renderer.render(scene,camera)
 }
 function build(){
+ white.color.set($('bodyColor').value);red.color.set($('stripeColor').value);
+ const solarN=Number($('solarPanels').value);if(!Number.isInteger(solarN)||solarN<0||solarN>12){status.textContent='Paneles solares: introduce un número entre 0 y 12';return}
+
  const vals=['length','width','height'].map(id=>Number($(id).value));if(vals.some((v,i)=>!Number.isFinite(v)||v<[[5,10],[2,3],[2.2,3.4]][i][0]||v>[[5,10],[2,3],[2.2,3.4]][i][1])){status.textContent='Dimensiones fuera del rango permitido';return}
  const [l,w,h]=vals;
  if(group){scene.remove(group);group.traverse(o=>{o.geometry?.dispose()})}
@@ -44,8 +47,22 @@ function build(){
  box(.045,.86,w*.72,right-.045,base+h*.69,0,glass);
  box(.05,.16,w*.77,right-.07,base+h*.35,0,trim);
  box(.05,.55,w*.55,left+.09,base+h*.67,0,glass);
+ // Exterior decals are simulated; the logo is a text placeholder, not official artwork.
+ const brand=$('brand').value==='Custom'?$('customBrand').value.trim():$('brand').value;
+ if(brand&&brand!=='None'){
+  const labelCanvas=document.createElement('canvas');labelCanvas.width=1024;labelCanvas.height=180;const c=labelCanvas.getContext('2d');c.clearRect(0,0,1024,180);c.fillStyle='#172d38';c.font='bold 82px sans-serif';c.textAlign='center';c.fillText(brand.slice(0,28).toUpperCase(),512,112,990);
+  const labelTexture=new T.CanvasTexture(labelCanvas);const decal=new T.Mesh(new T.PlaneGeometry(Math.min(l*.38,2.7),.48),new T.MeshBasicMaterial({map:labelTexture,transparent:true,side:T.DoubleSide}));
+  decal.position.set(-l*.08,base+h*.82,w/2+.29);group.add(decal);
+ }
  // Roof details
- box(l*.38,.12,w*.40,0,top+.08,0,trim);
+// Solar panels laid out in a bounded grid on the roof.
+ for(let i=0;i<solarN;i++){
+  const columns=Math.min(3,solarN),rows=Math.ceil(solarN/columns),col=i%columns,row=Math.floor(i/columns);
+  const panelLength=Math.min(1.55,(l-1.6)/rows-.10),panelWidth=Math.min(.62,(w-.36)/columns-.10);
+  const px=(row-(rows-1)/2)*(panelLength+.10),pz=(col-(columns-1)/2)*(panelWidth+.10);
+  box(panelLength,.045,panelWidth,px,top+.14,pz,trim);
+  box(panelLength-.08,.052,panelWidth-.08,px,top+.17,pz,glass);
+ }
  box(.65,.15,.65,l*.20,top+.12,0,white);
  // Tandem wheels with silver hubcaps
  for(const x of [-l*.20,l*.02])for(const z of [-w/2-.17,w/2+.17]){
@@ -58,7 +75,7 @@ function build(){
  box(.5,.15,.24,right+1.38,.67,0,silver);cylinder(.14,.10,right+1.30,.20,0,rubber,Math.PI/2);
  // Ground plane, soft shadow
  const ground=new T.Mesh(new T.PlaneGeometry(40,40),new T.MeshStandardMaterial({color:'#edf0f0',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.06;group.add(ground);
- status.textContent='Modelo exterior 3D listo. Arrastra con el dedo para girar. No es fotogrametría.';draw();
+ status.textContent='Modelo exterior 3D listo: '+solarN+' panel(es) solares; color y marca configurados manualmente. Las fotos no se analizan automáticamente.';draw();
 }
 function resize(){draw()}window.addEventListener('resize',resize);
 const v=$('view');
