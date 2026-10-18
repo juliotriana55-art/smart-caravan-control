@@ -55,6 +55,8 @@ root.SCCEquipmentPins=Object.freeze({list,add,move,remove});
 })(typeof window!=='undefined'?window:globalThis);
 
 let selectedPin=-1;
+function showStage(item){activePhoto=item;pins=SCCEquipmentPins.list(item.pins);selectedPin=-1;movingPin=false;if(stageUrl)URL.revokeObjectURL(stageUrl);stageUrl=URL.createObjectURL(item.blob);const el=$('stage');el.replaceChildren();const im=document.createElement('img');im.src=stageUrl;im.alt='Caravan photo';el.append(im);paintPins();}
+
 function pinStatus(message){$('pinEditStatus').textContent=message}
 function paintPins(){document.querySelectorAll('#stage .pin').forEach(p=>p.remove());pins=SCCEquipmentPins.list(pins);pins.forEach((pin,i)=>{const b=document.createElement('button');b.type='button';b.className='pin';b.textContent=pin.label;b.style.left=pin.x+'%';b.style.top=pin.y+'%';b.style.transform='translate(-50%,-50%)';b.setAttribute('aria-label','Select '+pin.label+' marker');b.setAttribute('aria-pressed',String(selectedPin===i));if(selectedPin===i)b.style.outline='3px solid white';b.onclick=e=>{e.stopPropagation();selectedPin=i;paintPins();pinStatus('Selected '+pin.label+'. Tap Move selected, then tap its new location; or Delete selected.')};$('stage').append(b)})}
 function pinPoint(e){const box=$('stage').getBoundingClientRect();return {x:(e.clientX-box.left)/box.width*100,y:(e.clientY-box.top)/box.height*100}}
