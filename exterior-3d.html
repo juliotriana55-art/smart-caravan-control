@@ -4,11 +4,11 @@ try{
 T=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/+esm');
 scene=new T.Scene();scene.background=new T.Color('#f7f9fa');
 scene.add(new T.HemisphereLight('#ffffff','#a8b6c2',2.5));
-const sun=new T.DirectionalLight('#ffffff',2.4);sun.position.set(-4,12,9);scene.add(sun);
-camera=new T.PerspectiveCamera(38,1,.1,100);renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));$('view').append(renderer.domElement);
+const sun=new T.DirectionalLight('#ffffff',2.4);sun.position.set(-4,12,9);scene.add(sun);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-14;sun.shadow.camera.right=14;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-14;
+camera=new T.PerspectiveCamera(38,1,.1,100);renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;$('view').append(renderer.domElement);
 const mat=(c,metal=0)=>new T.MeshStandardMaterial({color:c,metalness:metal,roughness:metal?.38:.72,side:T.DoubleSide});
-const white=mat('#f4f6f5'),dark=mat('#1b2d37'),glass=new T.MeshPhysicalMaterial({color:'#183543',metalness:.3,roughness:.16,transparent:true,opacity:.87,side:T.DoubleSide}),trim=mat('#273b45'),silver=mat('#a5b1b7',.6),rubber=mat('#1a2025'),red=mat('#252b31');
-function box(w,h,d,x,y,z,m){const a=new T.Mesh(new T.BoxGeometry(w,h,d),m);a.position.set(x,y,z);group.add(a);return a}
+const white=mat('#f4f6f5'),dark=mat('#1b2d37'),glass=new T.MeshPhysicalMaterial({color:'#183543',metalness:.22,roughness:.08,clearcoat:1,clearcoatRoughness:.07,side:T.DoubleSide}),trim=mat('#273b45'),silver=mat('#a5b1b7',.6),rubber=mat('#1a2025'),red=mat('#252b31');
+function box(w,h,d,x,y,z,m){const a=new T.Mesh(new T.BoxGeometry(w,h,d),m);a.position.set(x,y,z);group.add(a);a.castShadow=true;a.receiveShadow=true;return a}
 function cylinder(r,h,x,y,z,m,rot=0){const a=new T.Mesh(new T.CylinderGeometry(r,r,h,24),m);a.position.set(x,y,z);a.rotation.x=rot;group.add(a);return a}
 function sidePanel(points,z,m){const shape=new T.Shape();shape.moveTo(points[0][0],points[0][1]);points.slice(1).forEach(p=>shape.lineTo(p[0],p[1]));shape.closePath();const mesh=new T.Mesh(new T.ShapeGeometry(shape),m);mesh.position.z=z;group.add(mesh);return mesh}
 function draw(){
@@ -175,7 +175,7 @@ function build(){
   cylinder(.07,.10,x,.14,-w*.25,pipe);
  }
  // Ground plane, soft shadow
- const ground=new T.Mesh(new T.PlaneGeometry(40,40),new T.MeshStandardMaterial({color:'#edf0f0',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.06;group.add(ground);
+ const ground=new T.Mesh(new T.PlaneGeometry(40,40),new T.MeshStandardMaterial({color:'#edf0f0',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.06;ground.receiveShadow=true;group.add(ground);
  try{localStorage.setItem('scc-exterior-3d-config-v1',JSON.stringify(config));$('saveStatus').textContent='Diseño guardado en este navegador.'}catch(e){$('saveStatus').textContent='No se pudo guardar el diseño: '+e.message}status.textContent='Modelo 3D actualizado: '+solarN+' paneles, '+axles+' eje(s), accesorios personalizados. Fotos no analizadas automáticamente.';draw();
 }
 function orbitTick(now){if(!autoOrbit)return;if(orbitLast)yaw+=(Math.min(now-orbitLast,80)/1000)*.34;orbitLast=now;draw();orbitFrame=requestAnimationFrame(orbitTick)}
