@@ -75,6 +75,16 @@ function build(){
   box(.12,.13,.19,left-.50,base+.43,z,stop);
   box(.12,.13,.14,left-.50,base+.43,z-sign*.19,reverse);
  }
+ // Rear-view camera: high and centered on rear wall (-X), with black housing and lens.
+ box(.17,.14,.30,left-.13,top-.30,0,trim);
+ const cameraLens=new T.Mesh(new T.SphereGeometry(.075,12,10),glass);
+ cameraLens.position.set(left-.24,top-.32,0);group.add(cameraLens);
+ // Number-plate holder mounted to the rear bumper, offset from the spare wheel.
+ // The holder is a flat black backing with a light plate and a narrow red/white lamp.
+ const plateZ=w*.31;
+ box(.075,.48,.70,left-.49,base+.12,plateZ,trim);
+ box(.083,.24,.57,left-.54,base+.04,plateZ,white);
+ box(.086,.09,.60,left-.54,base+.27,plateZ,stop);
  // Front and rear panoramic window panels conform to the tapered nose.
  box(.045,.86,w*.72,right-.045,base+h*.69,0,glass);
  box(.05,.16,w*.77,right-.07,base+h*.35,0,trim);
