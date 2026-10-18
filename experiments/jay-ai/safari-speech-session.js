@@ -10,7 +10,7 @@
     }
     function stop(){clear(true);onStatus('Stopped. Tap Talk to try again.');}
     function start(){
-      if(active){stop();return false;}
+      if(active){clear(true);onStatus('Restarting microphone for a new question…');}
       const Recognition=root.SpeechRecognition||root.webkitSpeechRecognition;
       if(!Recognition){onStatus('Speech recognition unavailable; use the keyboard.');return false;}
       const session=new Recognition();
@@ -30,6 +30,7 @@
         clear(false);
         onStatus('Microphone error: '+String(event.error||'unknown')+'. Use the keyboard or retry.');
       };
+      session.onnomatch=function(){if(active!==session)return;clear(false);onStatus('No speech matched. Tap Talk to retry or type your question.');};
       session.onend=function(){
         if(active!==session)return;
         clear(false);
