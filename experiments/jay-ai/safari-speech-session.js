@@ -45,5 +45,16 @@
     }
     return {start:start,stop:stop,isListening:function(){return !!active;}};
   }
+  // Pilot 5 calls this function from its inline equipment-map code.
+  // Persist pins on the same IndexedDB photo record without replacing its blob.
+  root.persistPins=async function(){
+    if(!activePhoto)throw Error('Select a photo first.');
+    const id=activePhoto.id;
+    const original=await transaction('readonly',store=>store.get(id));
+    if(!original)throw Error('Photo was removed.');
+    const saved={...original,pins:SCCEquipmentPins.list(pins)};
+    await transaction('readwrite',store=>store.put(saved));
+    if(activePhoto&&activePhoto.id===id)activePhoto=saved;
+  };
   root.createSpeechSession=createSpeechSession;
 })(typeof window!=='undefined'?window:globalThis);
