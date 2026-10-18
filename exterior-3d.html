@@ -30,9 +30,9 @@ function build(){
  // Car body has an angled nose, softened roof and rear taper, unlike a plain rectangular box.
  const left=-l/2,right=l/2,base=.77,top=base+h;
  const outline=[[left+.52,base],[right-.30,base],[right,base+.42],[right,top-.60],[right-.38,top-.08],[right-.74,top],[left+.55,top],[left+.12,top-.15],[left,top-.55],[left,base+.46]];
- sidePanel(outline,w/2,white);sidePanel(outline,-w/2,white);
+ // One continuous extruded shell: avoid coplanar duplicate side walls and visible seams.
  const poly=new T.Shape();outline.forEach((p,i)=>i?poly.lineTo(...p):poly.moveTo(...p));poly.closePath();
- const solid=new T.Mesh(new T.ExtrudeGeometry(poly,{depth:w-.04,bevelEnabled:true,bevelSize:.055,bevelThickness:.055,bevelSegments:3,steps:1}),white);solid.position.z=-w/2+.02;group.add(solid);
+ const solid=new T.Mesh(new T.ExtrudeGeometry(poly,{depth:w,bevelEnabled:true,bevelSize:.045,bevelThickness:.045,bevelSegments:4,steps:1}),white);solid.position.z=-w/2;solid.castShadow=true;solid.receiveShadow=true;group.add(solid);
  // Distinct dark lower skirt and clean accent stripe
  for(const z of [-w/2-.07,w/2+.07]){
   sidePanel([[left+.4,base+.08],[right-.30,base+.08],[right-.15,base+.35],[right-.15,base+.70],[left+.16,base+.70]],z,trim);
@@ -125,9 +125,9 @@ function build(){
  box(.083,.24,.57,left-.54,base+.04,plateZ,white);
  box(.086,.09,.60,left-.54,base+.27,plateZ,stop);
  // Front and rear panoramic window panels conform to the tapered nose.
- box(.045,.86,w*.72,right-.045,base+h*.69,0,glass);
- box(.05,.16,w*.77,right-.07,base+h*.35,0,trim);
- box(.05,.55,w*.55,left+.09,base+h*.67,0,glass);
+ box(.045,.86,w*.72,right+.027,base+h*.69,0,glass);
+ box(.05,.16,w*.77,right+.025,base+h*.35,0,trim);
+ box(.05,.55,w*.55,left-.028,base+h*.67,0,glass);
  // Decals are approximate vector typography, not the official Royal Flair lion artwork.
  const brand=$('brand').value==='Custom'?$('customBrand').value.trim():$('brand').value;
  if(brand&&brand!=='None'){
@@ -135,9 +135,9 @@ function build(){
   c.font='bold 90px Georgia,serif';c.fillText(brand.slice(0,28).toUpperCase(),512,119,990);
   if(brand.toLowerCase()==='royal flair'){c.font='38px Georgia,serif';c.letterSpacing='10px';c.fillText('CARAVANS',512,182,600)}
   const labelTexture=new T.CanvasTexture(labelCanvas);const decal=new T.Mesh(new T.PlaneGeometry(Math.min(l*.42,3.1),.70),new T.MeshBasicMaterial({map:labelTexture,transparent:true,side:T.DoubleSide}));
-  decal.position.set(-l*.08,base+h*.85,w/2+.35);group.add(decal);
-  const other=decal.clone();other.position.z=-w/2-.35;other.rotation.y=Math.PI;group.add(other);
-  const nose=decal.clone();nose.rotation.y=Math.PI/2;nose.position.set(right+.10,base+h*.79,0);group.add(nose);
+  decal.position.set(-l*.08,base+h*.85,w/2+.067);group.add(decal);
+  const other=decal.clone();other.position.z=-w/2-.067;other.rotation.y=Math.PI;group.add(other);
+  const nose=decal.clone();nose.rotation.y=Math.PI/2;nose.position.set(right+.066,base+h*.79,0);group.add(nose);
  }
  // Roof details
 // Solar panels laid out in a bounded grid on the roof.
@@ -176,7 +176,7 @@ function build(){
   }
  }
  // Optional awning on the door (-Z) side.
- if($('awning').checked){box(l*.80,.14,.17,-.05,top-.25,-w/2-.19,trim);for(const x of [-l*.42,l*.37])box(.065,h*.74,.07,x,base+h*.54,-w/2-.24,trim)}
+ if($('awning').checked){box(l*.80,.14,.17,-.05,top-.25,-w/2-.11,trim);for(const x of [-l*.37,l*.33]){box(.065,h*.74,.07,x,base+h*.54,-w/2-.09,trim);box(.18,.12,.10,x,base+.16,-w/2-.11,trim)}}
  // Optional front gas bottles and storage box.
  if($('frontBox').checked)box(.84,.83,w*.63,right+.35,base+.44,0,trim);
  if($('gas').checked)for(const z of [-.32,.32]){cylinder(.20,.51,right+.90,base+.38,z,silver);cylinder(.12,.08,right+.90,base+.68,z,trim)}
@@ -192,8 +192,8 @@ function build(){
  }
  for(const x of [-l*.34,l*.30])box(.12,.11,w*.65,x,.50,0,trim);
  // Drawbar A-frame and jockey wheel at the nose (positive X)
- for(const z of [-.55,.55]){const arm=box(1.65,.12,.11,right+.64,.68,z/2,trim);arm.rotation.y=(z>0?-.23:.23)}
- box(.5,.15,.24,right+1.38,.67,0,silver);cylinder(.14,.10,right+1.30,.20,0,rubber,Math.PI/2);
+ for(const z of [-.55,.55]){const arm=box(1.65,.12,.11,right+.58,base-.08,z/2,trim);arm.rotation.y=(z>0?-.23:.23)}
+ box(.5,.15,.24,right+1.34,base-.08,0,silver);cylinder(.14,.10,right+1.30,.20,0,rubber,Math.PI/2);
  // Underbody fresh/grey water tanks with straps, service ports and drain outlets.
  const tankN=Math.max(0,Math.min(4,Number($('waterTanks').value)||0));
  const tankBody=mat('#343b3d'),tankBand=mat('#777f81'),pipe=mat('#292f32');
@@ -210,6 +210,8 @@ function build(){
   box(.56,.08,.49,x,top+.10,0,trim);
   box(.46,.035,.39,x,top+.15,0,glass);
  }
+ // Join the rear spare-wheel carrier physically to the bumper.
+ if($('spare').checked){box(.58,.11,.10,left-.51,base+1.10,0,trim);box(.12,.55,.10,left-.57,base+.85,0,trim)}
  // Ground plane, soft shadow
  const ground=new T.Mesh(new T.PlaneGeometry(40,40),new T.MeshStandardMaterial({color:'#edf0f0',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.06;ground.receiveShadow=true;group.add(ground);
  try{localStorage.setItem('scc-exterior-3d-config-v1',JSON.stringify(config));$('saveStatus').textContent='Diseño guardado en este navegador.'}catch(e){$('saveStatus').textContent='No se pudo guardar el diseño: '+e.message}status.textContent='Modelo 3D actualizado: '+solarN+' paneles, '+axles+' eje(s), accesorios personalizados. Fotos no analizadas automáticamente.';draw();
