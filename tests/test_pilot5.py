@@ -35,6 +35,10 @@ class Pilot5Tests(unittest.TestCase):
     def test_photo_and_marker_storage(self):
         self.assertIn("indexedDB.open", self.html)
         self.assertIn("persistPins()", self.html)
+        speech = (PAGE.parent / "experiments/jay-ai/safari-speech-session.js").read_text(encoding="utf-8")
+        self.assertIn("root.persistPins=async function()", speech)
+        self.assertIn("pins:SCCEquipmentPins.list(pins)", speech)
+        self.assertIn("src=\"experiments/jay-ai/safari-speech-session.js\"", self.html)
 
     def test_no_provider_or_control_calls(self):
         self.assertNotIn("api.openai.com", self.html)
