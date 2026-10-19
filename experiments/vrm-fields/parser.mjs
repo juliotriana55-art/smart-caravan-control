@@ -1,7 +1,7 @@
 // Experimental parser for Victron VRM diagnostics, not wired to production Worker.
 // Assumes diagnostics records include descriptive labels; logs no token or customer data.
 const n=x=>typeof x==='number'&&Number.isFinite(x)?x:typeof x==='string'&&x.trim()!==''&&/^[-+]?\d+(?:\.\d+)?$/.test(x.trim())?Number(x):null;
-const stamp=r=>n(r.timestamp)??0;
+const stamp=r=>{const t=n(r.timestamp);return t===null?0:t>1e11?t/1000:t};
 const label=r=>[r.description,r.Device,r.deviceName,r.name].filter(x=>typeof x==='string').join(' ');
 const codeOf=r=>String(r.code??'');
 function find(records,codes,pattern){return records.filter(r=>codes.includes(codeOf(r))&&pattern.test(label(r))).sort((a,b)=>stamp(b)-stamp(a))[0]??null;}
