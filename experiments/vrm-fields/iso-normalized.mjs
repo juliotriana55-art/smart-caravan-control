@@ -1,1 +1,2 @@
-export const normalizeStamp = value => typeof value === 'string' ? Date.parse(value) : value;
+import { parseSourceSeconds } from './iso-time.mjs';
+export const normalizeStamp = value => parseSourceSeconds(value);
