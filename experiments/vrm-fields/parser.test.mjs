@@ -23,3 +23,7 @@ test('stale DC readings are suppressed',()=>{const x=extractFreshSnapshot({recor
 
 test('fresh zero percent is not mistaken for missing',()=>{const x=extractFreshSnapshot({records:[row('T','Fresh Water 1 level %',0,995),row('T','Fresh Water 2 level %',0,997)]},{nowSeconds:1000});assert.equal(x.status,'fresh');assert.deepEqual(x.tanks.map(t=>t.percentage),[0,0])});
 test('offline suppresses inverter and tank data',()=>{const x=extractFreshSnapshot({online:false,records:[row('State','VE.Bus state',9,995),row('T','Fresh Water 1 level %',0,995)]},{nowSeconds:1000});assert.equal(x.status,'offline');assert.equal(x.inverter,null);assert.equal(x.tanks.length,0)});
+
+test('undated inverter state is unknown, not live',()=>{const x=extractFreshSnapshot({records:[{code:'State',description:'VE.Bus state',rawValue:9}]},{nowSeconds:1000});assert.equal(x.status,'unknown');assert.equal(x.inverter,null)});
+test('stale inverter is not mixed into fresh DC power',()=>{const x=extractFreshSnapshot({records:[row('State','VE.Bus state',9,100),row('Pdc','DC system power',42,998)]},{nowSeconds:1000});assert.equal(x.status,'fresh');assert.equal(x.inverter,null);assert.equal(x.dcPower,42)});
+test('future-dated diagnostic is not live',()=>{const x=extractFreshSnapshot({records:[row('Pdc','DC system power',42,1010)]},{nowSeconds:1000});assert.equal(x.status,'unknown');assert.equal(x.dcPower,null)});
