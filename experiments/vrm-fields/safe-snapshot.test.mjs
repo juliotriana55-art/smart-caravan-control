@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { extractSafeSnapshot } from './safe-snapshot.mjs';
+const row=(code,description,rawValue,timestamp='2026-10-20T01:30:00Z')=>({code,description,rawValue,timestamp});
+const read=(records,extra={})=>extractSafeSnapshot({records,...extra},{nowSeconds:1792459805});
+test('whitespace offline suppresses power and tanks',()=>{const x=read([row('Pdc','DC system power',99),row('T','Fresh Water 1 level %',0)],{status:' OFFLINE '});assert.equal(x.status,'offline');assert.equal(x.dcPower,null);assert.equal(x.tanks.length,0)});
+test('disconnected suppresses inverter',()=>{const x=read([row('State','VE.Bus state',9)],{status:'Disconnected'});assert.equal(x.status,'offline');assert.equal(x.inverter,null)});
+test('unrelated fresh record is not labelled fresh telemetry',()=>{const x=read([row('XX','Unrelated temperature',22)]);assert.equal(x.status,'unknown');assert.equal(x.dcPower,null)});
+test('valid zero DC power stays fresh',()=>{const x=read([row('Pdc','DC system power',0)]);assert.equal(x.status,'fresh');assert.equal(x.dcPower,0)});
+test('two individual tanks can both read zero percent',()=>{const x=read([row('T','Fresh Water 1 level %',0),row('T','Fresh Water 2 level %',0)]);assert.equal(x.status,'fresh');assert.deepEqual(x.tanks.map(t=>t.percentage),[0,0])});
