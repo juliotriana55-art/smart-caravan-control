@@ -6,8 +6,8 @@ const label=r=>[r.description,r.Device,r.deviceName,r.name].filter(x=>typeof x==
 const codeOf=r=>String(r.code??'');
 function find(records,codes,pattern){return records.filter(r=>codes.includes(codeOf(r))&&pattern.test(label(r))).sort((a,b)=>stamp(b)-stamp(a))[0]??null;}
 function val(r){return r?n(r.rawValue??r.value):null;}
-function isTank(r){return /(?:fresh\s*water|tank\s*(?:level|1|2)|water\s*tank|waste\s*water)/i.test(label(r));}
-function tankName(r){const full=label(r);const m=full.match(/(?:fresh\s*water|waste\s*water|grey\s*water)\s*\d+/i);return m?m[0].replace(/\s+/g,' ').trim():null;}
+function isTank(r){return /(?:fresh\s*water|tank\s*(?:level|1|2)|water\s*tank|waste\s*water|gr[ea]y\s*water|black\s*water)/i.test(label(r));}
+function tankName(r){const full=label(r);const m=full.match(/(?:fresh\s*water|waste\s*water|gr[ea]y\s*water|black\s*water)\s*\d+/i);return m?m[0].replace(/\s+/g,' ').trim():null;}
 export function extractExtended(diag){
  const records=Array.isArray(diag?.records)?diag.records:[];
  if(diag?.online===false||String(diag?.status??'').toLowerCase()==='offline')return {dcPower:null,acLoadsWatts:null,inverter:null,tanks:[]};
