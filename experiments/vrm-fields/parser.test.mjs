@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {extractExtended} from './parser.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';import {extractExtended,extractFreshSnapshot} from './parser.mjs';
 const row=(code,description,rawValue,timestamp=1000,other={})=>({code,description,rawValue,timestamp,...other});
 test('fresh water zero is a valid reading, not missing',()=>{let a=extractExtended({records:[row('T','Fresh Water 1 level %',0),row('T','Fresh Water 2 level %',0)]});assert.equal(a.tanks.length,2);assert.deepEqual(a.tanks.map(t=>t.percentage),[0,0])});
 test('unconfigured sensors with dashes are omitted',()=>{let a=extractExtended({records:[row('T','Fresh Water 1 level %','--'),row('T','Waste Water 1 level %',null)]});assert.equal(a.tanks.length,0)});
@@ -18,3 +18,5 @@ test('explicit inverter on/off text',()=>{assert.equal(extractExtended({records:
 test('offline returns unknown power',()=>assert.equal(extractExtended({online:false,records:[row('Pdc','DC system power',150)]}).dcPower,null));
 
 test('offline has no tank readings',()=>assert.equal(extractExtended({status:'offline',records:[row('T','Fresh Water 1 level %',0)]}).tanks.length,0));
+
+test('stale DC readings are suppressed',()=>{const x=extractFreshSnapshot({records:[row('Pdc','DC system power',150,600)]},{nowSeconds:1000});assert.equal(x.status,'stale');assert.equal(x.dcPower,null)});
