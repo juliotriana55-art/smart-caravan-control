@@ -27,3 +27,5 @@ test('offline suppresses inverter and tank data',()=>{const x=extractFreshSnapsh
 test('undated inverter state is unknown, not live',()=>{const x=extractFreshSnapshot({records:[{code:'State',description:'VE.Bus state',rawValue:9}]},{nowSeconds:1000});assert.equal(x.status,'unknown');assert.equal(x.inverter,null)});
 test('stale inverter is not mixed into fresh DC power',()=>{const x=extractFreshSnapshot({records:[row('State','VE.Bus state',9,100),row('Pdc','DC system power',42,998)]},{nowSeconds:1000});assert.equal(x.status,'fresh');assert.equal(x.inverter,null);assert.equal(x.dcPower,42)});
 test('future-dated diagnostic is not live',()=>{const x=extractFreshSnapshot({records:[row('Pdc','DC system power',42,1010)]},{nowSeconds:1000});assert.equal(x.status,'unknown');assert.equal(x.dcPower,null)});
+
+test('millisecond source timestamp is normalized',()=>{const x=extractFreshSnapshot({records:[row('Pdc','DC system power',42,1700000000000)]},{nowSeconds:1700000005});assert.equal(x.status,'fresh');assert.equal(x.dcPower,42)});
