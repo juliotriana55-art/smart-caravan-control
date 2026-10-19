@@ -96,7 +96,7 @@ else if(bat&&level){liveMetric=true;out=Number.isFinite(d.soc)?(es?'La carga de 
 else if(bat){liveMetric=true;out=Number.isFinite(d.soc)?(es?'La batería tiene ':'Battery charge is ')+fmt(d.soc)+(es?'% y el voltaje es ':'% and voltage is ')+(Number.isFinite(d.voltage)?fmt(d.voltage,2)+(es?' voltios.':' volts.'):'—.'):tt('batteryAbsent')}
 else if(solar){liveMetric=true;out=Number.isFinite(d.solarWatts)?fill(tt('solarAnswer'),{watts:fmt(d.solarWatts)}):tt('solarAbsent')}
 else if(/inverter|inversor/.test(q)){liveMetric=true;out=d.inverter?fill(tt('inverterAnswer'),{state:tt(d.inverter)}):tt('inverterAbsent')}
-else if(/water|agua|tank|tanque/.test(q)){liveMetric=true;out=Number.isFinite(d.waterPct)?fill(tt('waterAnswer'),{pct:fmt(d.waterPct)}):tt('waterAbsent')}
+else if(/water|agua|tank|tanque/.test(q)){liveMetric=true;out=Array.isArray(d.tanks)&&d.tanks.length?(es?'Tanques registrados por VRM: ':'Tanks reported by VRM: ')+d.tanks.map(x=>x.name+' '+fmt(x.percentage)+'%').join(', ')+'.':Number.isFinite(d.waterPct)?fill(tt('waterAnswer'),{pct:fmt(d.waterPct)}):tt('waterAbsent')}
 else out=es?'Puedo responder por separado sobre cantidad, voltaje, corriente y carga de baterías, paneles solares y ubicaciones guardadas.':'Ask me about battery count, voltage, current, charge, solar panel count or saved equipment locations.';
 if(liveMetric){if(st.mode==='demo')out=(es?'Demostración: ':'Demo: ')+out;else if(st.data&&freshness()==='stale')out+=tt('oldWarning');else if(st.data&&freshness()==='unknown')out+=tt('unknownWarning')}
 addToHistory(raw,out);$('reply').textContent=st.name+': '+out;lastSpoken=out;voiceStatus('');syncResponseMode();if(st.responseMode!=='text')speak(out)}
