@@ -14,3 +14,5 @@ test('generic label is not a positive state',()=>assert.equal(extractExtended({r
 test('VE.Bus with space indicates inverting',()=>assert.equal(extractExtended({records:[row('State','VE Bus state',9)]}).inverter,'on'));
 
 test('explicit inverter on/off text',()=>{assert.equal(extractExtended({records:[row('State','Inverter status','Inverter on')]}).inverter,'on');assert.equal(extractExtended({records:[row('State','Inverter status','Inverter off')]}).inverter,'off')});
+
+test('offline returns unknown power',()=>assert.equal(extractExtended({online:false,records:[row('Pdc','DC system power',150)]}).dcPower,null));
