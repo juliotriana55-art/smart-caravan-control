@@ -1,1 +1,1 @@
-export const normalizeStamp = value => value;
+export const normalizeStamp = value => typeof value === 'string' ? Date.parse(value) : value;
