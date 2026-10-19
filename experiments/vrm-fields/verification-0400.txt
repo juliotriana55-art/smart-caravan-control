@@ -1,0 +1,6 @@
+20 October 2026 04:00 Melbourne
+Experimental safe-snapshot.mjs and safe-snapshot.test.mjs added on this feature branch.
+32/32 V8 harness assertions passed after refetching GitHub source. Not Node or CI.
+Two zero-percent tanks and zero DC watts remain valid. Offline and disconnected suppress live values.
+Not integrated into UI/Worker. Real VRM fixture absent. Safari voice unverified.
+No main, production, secrets, paid services or Worker changed.
