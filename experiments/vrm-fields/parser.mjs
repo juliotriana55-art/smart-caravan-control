@@ -12,14 +12,14 @@ export function extractExtended(diag){
  const records=Array.isArray(diag?.records)?diag.records:[];
  const dc=find(records,['Pdc','dcPower'],/dc\s*(system|loads|power)|dc power/i);
  const ac=find(records,['P','Pac','acPower','acLoad'],/ac\s*loads?|ac\s*power|consumption/i);
- const mode=find(records,['State','state','MODE','Mode','mode','S'],/multiplus|ve\.bus|inverter|charger/i);
+ const mode=find(records,['State','state','MODE','Mode','mode','S'],/multiplus|ve[.\s-]*bus|inverter|charger/i);
  const status=mode?String(mode.formattedValue??mode.textValue??mode.value??mode.rawValue??'').trim():'';
  // In VE.Bus state 9 means inverting; 0 means off. Other states must not be called "off".
  const stateValue=mode?n(mode.rawValue):null;
  // A label such as "Inverter disabled" must not be interpreted as "on".
  // Numeric VE.Bus state codes are only meaningful for identifiable VE.Bus devices.
- const veBus=mode&&/(?:multiplus|quattro|ve\\.?\\s*bus)/i.test(label(mode));
- const inverter=!mode?null:veBus&&stateValue!==null?(stateValue===9?'on':stateValue===0?'off':null):/^(?:inverting|inverter\\s+on)$/i.test(status)?'on':/^(?:off|inverter\\s+off)$/i.test(status)?'off':null;
+ const veBus=mode&&/(?:multiplus|quattro|ve[.\s-]*bus)/i.test(label(mode));
+ const inverter=!mode?null:veBus&&stateValue!==null?(stateValue===9?'on':stateValue===0?'off':null):/^(?:inverting|inverter\s+on)$/i.test(status)?'on':/^(?:off|inverter\s+off)$/i.test(status)?'off':null;
  // Tank records are not standardised by description or diagnostic code across setups.
  // Admit only percent-level records with a specific individual tank identity, never infer from '0' alone.
  const tanks=new Map();
