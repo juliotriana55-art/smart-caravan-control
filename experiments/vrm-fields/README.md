@@ -17,3 +17,6 @@ No production Worker, secrets, `main`, or live caravan settings were changed.
 - Added four regression tests; 13/13 passed in isolated V8 execution of the GitHub sources (not CI or Node test runner).
 - Hardware verification remains blocked by lack of a redacted real VRM diagnostic fixture; stale timestamps are not yet validated.
 - No production integration, Safari voice, generative AI or automatic 3D was verified.
+
+## Overnight note — 20 October 2026
+Added an experimental freshness guard with fresh/stale/offline/unknown states. It hides old and undated inverter, DC and tank readings. Six regression cases were added; 19/19 JavaScript checks passed in isolated V8, not Node or CI. Source timestamps are currently assumed to be Unix seconds. Real VRM schema and timestamps are not validated. Safari voice and live UI integration remain unverified. Production and main were not modified.
