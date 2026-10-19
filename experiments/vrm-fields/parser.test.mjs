@@ -29,3 +29,5 @@ test('stale inverter is not mixed into fresh DC power',()=>{const x=extractFresh
 test('future-dated diagnostic is not live',()=>{const x=extractFreshSnapshot({records:[row('Pdc','DC system power',42,1010)]},{nowSeconds:1000});assert.equal(x.status,'unknown');assert.equal(x.dcPower,null)});
 
 test('millisecond source timestamp is normalized',()=>{const x=extractFreshSnapshot({records:[row('Pdc','DC system power',42,1700000000000)]},{nowSeconds:1700000005});assert.equal(x.status,'fresh');assert.equal(x.dcPower,42)});
+
+test('grey water level zero remains valid',()=>{const x=extractExtended({records:[row('T','Grey Water 1 level %',0)]});assert.equal(x.tanks[0].percentage,0)});
