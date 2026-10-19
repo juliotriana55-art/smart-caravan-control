@@ -16,7 +16,10 @@ export function extractExtended(diag){
  const status=mode?String(mode.formattedValue??mode.textValue??mode.value??mode.rawValue??'').trim():'';
  // In VE.Bus state 9 means inverting; 0 means off. Other states must not be called "off".
  const stateValue=mode?n(mode.rawValue):null;
- const inverter=/invert(?:ing|er\s*on)?/i.test(status)||stateValue===9?'on':/^(?:off|0)$/i.test(status)||stateValue===0?'off':null;
+ // A label such as "Inverter disabled" must not be interpreted as "on".
+ // Numeric VE.Bus state codes are only meaningful for identifiable VE.Bus devices.
+ const veBus=mode&&/(?:multiplus|quattro|ve\\.?\\s*bus)/i.test(label(mode));
+ const inverter=!mode?null:veBus&&stateValue!==null?(stateValue===9?'on':stateValue===0?'off':null):/^(?:inverting|inverter\\s+on)$/i.test(status)?'on':/^(?:off|inverter\\s+off)$/i.test(status)?'off':null;
  // Tank records are not standardised by description or diagnostic code across setups.
  // Admit only percent-level records with a specific individual tank identity, never infer from '0' alone.
  const tanks=new Map();
