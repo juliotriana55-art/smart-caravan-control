@@ -16,3 +16,5 @@ test('VE.Bus with space indicates inverting',()=>assert.equal(extractExtended({r
 test('explicit inverter on/off text',()=>{assert.equal(extractExtended({records:[row('State','Inverter status','Inverter on')]}).inverter,'on');assert.equal(extractExtended({records:[row('State','Inverter status','Inverter off')]}).inverter,'off')});
 
 test('offline returns unknown power',()=>assert.equal(extractExtended({online:false,records:[row('Pdc','DC system power',150)]}).dcPower,null));
+
+test('offline has no tank readings',()=>assert.equal(extractExtended({status:'offline',records:[row('T','Fresh Water 1 level %',0)]}).tanks.length,0));
