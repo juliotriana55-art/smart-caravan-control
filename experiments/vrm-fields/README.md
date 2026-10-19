@@ -11,3 +11,9 @@
 **How to run local tests** (Node 20+): `node --test experiments/vrm-fields/parser.test.mjs`. Not yet executed in CI as of this commit.
 
 No production Worker, secrets, `main`, or live caravan settings were changed.
+
+## Nightly update — 19 Oct 2026
+- Fixed inverter VE.Bus label and textual state matching, and suppressed telemetry when the input explicitly reports offline.
+- Added four regression tests; 13/13 passed in isolated V8 execution of the GitHub sources (not CI or Node test runner).
+- Hardware verification remains blocked by lack of a redacted real VRM diagnostic fixture; stale timestamps are not yet validated.
+- No production integration, Safari voice, generative AI or automatic 3D was verified.
