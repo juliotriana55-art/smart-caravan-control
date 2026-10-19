@@ -8,3 +8,5 @@ test('read DC power and AC loads if diagnostic codes and labels agree',()=>{let 
 test('MultiPlus inverting state maps to on',()=>{assert.equal(extractExtended({records:[row('State','MultiPlus VE.Bus state',9)]}).inverter,'on')});
 test('unknown inverter modes are not guessed as off',()=>{assert.equal(extractExtended({records:[row('State','MultiPlus VE.Bus state',3)]}).inverter,null)});
 test('do not invent telemetry from empty diagnostics',()=>{let a=extractExtended({records:[]});assert.equal(a.inverter,null);assert.equal(a.dcPower,null);assert.equal(a.tanks.length,0)});
+
+test('generic label is not a positive state',()=>assert.equal(extractExtended({records:[row('State','Inverter status','Inverter disabled')]}).inverter,null));
