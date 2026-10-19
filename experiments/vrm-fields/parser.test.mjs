@@ -20,3 +20,6 @@ test('offline returns unknown power',()=>assert.equal(extractExtended({online:fa
 test('offline has no tank readings',()=>assert.equal(extractExtended({status:'offline',records:[row('T','Fresh Water 1 level %',0)]}).tanks.length,0));
 
 test('stale DC readings are suppressed',()=>{const x=extractFreshSnapshot({records:[row('Pdc','DC system power',150,600)]},{nowSeconds:1000});assert.equal(x.status,'stale');assert.equal(x.dcPower,null)});
+
+test('fresh zero percent is not mistaken for missing',()=>{const x=extractFreshSnapshot({records:[row('T','Fresh Water 1 level %',0,995),row('T','Fresh Water 2 level %',0,997)]},{nowSeconds:1000});assert.equal(x.status,'fresh');assert.deepEqual(x.tanks.map(t=>t.percentage),[0,0])});
+test('offline suppresses inverter and tank data',()=>{const x=extractFreshSnapshot({online:false,records:[row('State','VE.Bus state',9,995),row('T','Fresh Water 1 level %',0,995)]},{nowSeconds:1000});assert.equal(x.status,'offline');assert.equal(x.inverter,null);assert.equal(x.tanks.length,0)});
