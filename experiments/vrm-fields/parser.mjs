@@ -10,6 +10,7 @@ function isTank(r){return /(?:fresh\s*water|tank\s*(?:level|1|2)|water\s*tank|wa
 function tankName(r){const full=label(r);const m=full.match(/(?:fresh\s*water|waste\s*water|grey\s*water)\s*\d+/i);return m?m[0].replace(/\s+/g,' ').trim():null;}
 export function extractExtended(diag){
  const records=Array.isArray(diag?.records)?diag.records:[];
+ if(diag?.online===false||String(diag?.status??'').toLowerCase()==='offline')return {dcPower:null,acLoadsWatts:null,inverter:null,tanks:[]};
  const dc=find(records,['Pdc','dcPower'],/dc\s*(system|loads|power)|dc power/i);
  const ac=find(records,['P','Pac','acPower','acLoad'],/ac\s*loads?|ac\s*power|consumption/i);
  const mode=find(records,['State','state','MODE','Mode','mode','S'],/multiplus|ve[.\s-]*bus|inverter|charger/i);
