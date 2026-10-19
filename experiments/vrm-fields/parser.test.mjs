@@ -12,3 +12,5 @@ test('do not invent telemetry from empty diagnostics',()=>{let a=extractExtended
 test('generic label is not a positive state',()=>assert.equal(extractExtended({records:[row('State','Inverter status','Inverter disabled')]}).inverter,null));
 
 test('VE.Bus with space indicates inverting',()=>assert.equal(extractExtended({records:[row('State','VE Bus state',9)]}).inverter,'on'));
+
+test('explicit inverter on/off text',()=>{assert.equal(extractExtended({records:[row('State','Inverter status','Inverter on')]}).inverter,'on');assert.equal(extractExtended({records:[row('State','Inverter status','Inverter off')]}).inverter,'off')});
