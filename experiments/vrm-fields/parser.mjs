@@ -38,3 +38,17 @@ export function extractExtended(diag){
  return {dcPower:val(dc),acLoadsWatts:val(ac),inverter,
   tanks:[...tanks.values()].map(({_timestamp,...rest})=>rest).sort((a,b)=>a.name.localeCompare(b.name))};
 }
+
+/** Experimental freshness filter. Old or undated records are never shown as live. */
+export function extractFreshSnapshot(diag,{nowSeconds=Date.now()/1000,maxAgeSeconds=300}={}){
+ const rows=Array.isArray(diag?.records)?diag.records:[];
+ const dated=rows.map(r=>({r,t:stamp(r)})).filter(x=>x.t>0&&x.t<=nowSeconds);
+ const last=dated.reduce((v,x)=>Math.max(v,x.t),0);
+ const lastUpdated=last?new Date(last*1000).toISOString():null;
+ const blank=()=>extractExtended({records:[]});
+ if(diag?.online===false||String(diag?.status??'').toLowerCase()==='offline')
+  return {status:'offline',lastUpdated,...blank()};
+ const fresh=dated.filter(x=>nowSeconds-x.t<=maxAgeSeconds).map(x=>x.r);
+ if(!fresh.length)return {status:dated.length?'stale':'unknown',lastUpdated,...blank()};
+ return {status:'fresh',lastUpdated,...extractExtended({...diag,records:fresh})};
+}
