@@ -10,3 +10,5 @@ test('unknown inverter modes are not guessed as off',()=>{assert.equal(extractEx
 test('do not invent telemetry from empty diagnostics',()=>{let a=extractExtended({records:[]});assert.equal(a.inverter,null);assert.equal(a.dcPower,null);assert.equal(a.tanks.length,0)});
 
 test('generic label is not a positive state',()=>assert.equal(extractExtended({records:[row('State','Inverter status','Inverter disabled')]}).inverter,null));
+
+test('VE.Bus with space indicates inverting',()=>assert.equal(extractExtended({records:[row('State','VE Bus state',9)]}).inverter,'on'));
