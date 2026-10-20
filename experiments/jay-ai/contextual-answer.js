@@ -18,10 +18,11 @@
   if(heater)return p.heaterLoc?(es?'Ubicación registrada del calefactor: ':'Recorded heater location: ')+p.heaterLoc:(es?'No se ha registrado si existe calefactor ni su ubicación.':'Heater presence and location have not been recorded.');
   if(solar&&(count||!reading&&!trust))return validCount?(es?'Paneles solares registrados: ':'Recorded solar panels: ')+n+'.':(es?'No se ha registrado una cantidad válida de paneles solares.':'No valid solar-panel count is recorded.');
   if(solar||battery||reading||trust){
-   const soc=Number(d.soc),volts=Number(d.voltage),watts=Number(d.solar);
+   const metric=v=>typeof v==='number'&&Number.isFinite(v)?v:null;
+   const soc=metric(d.soc),volts=metric(d.voltage),watts=metric(d.solar);
    const parts=[];
-   if(solar)parts.push(Number.isFinite(watts)?(es?'Solar simulado: ':'Simulated solar: ')+watts.toFixed(0)+' W':'');
-   else parts.push(Number.isFinite(soc)&&Number.isFinite(volts)?(es?'Batería simulada: ':'Simulated battery: ')+soc.toFixed(0)+'% · '+volts.toFixed(2)+' V':'');
+   if(solar)parts.push(watts!==null?(es?'Solar simulado: ':'Simulated solar: ')+watts.toFixed(0)+' W':'');
+   else parts.push(soc!==null&&volts!==null?(es?'Batería simulada: ':'Simulated battery: ')+soc.toFixed(0)+'% · '+volts.toFixed(2)+' V':'');
    parts.push(status);
    return parts.filter(Boolean).join(' ');
   }
