@@ -1,0 +1,33 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {extractExtended,extractFreshSnapshot} from './parser.mjs';
+const row=(code,description,rawValue,timestamp=1000,other={})=>({code,description,rawValue,timestamp,...other});
+test('fresh water zero is a valid reading, not missing',()=>{let a=extractExtended({records:[row('T','Fresh Water 1 level %',0),row('T','Fresh Water 2 level %',0)]});assert.equal(a.tanks.length,2);assert.deepEqual(a.tanks.map(t=>t.percentage),[0,0])});
+test('unconfigured sensors with dashes are omitted',()=>{let a=extractExtended({records:[row('T','Fresh Water 1 level %','--'),row('T','Waste Water 1 level %',null)]});assert.equal(a.tanks.length,0)});
+test('take newest tank reading',()=>{let a=extractExtended({records:[row('T','Fresh Water 1 level %',24,100),row('T','Fresh Water 1 level %',0,300)]});assert.equal(a.tanks[0].percentage,0)});
+test('do not interpret non-level tank metrics as fill',()=>{assert.equal(extractExtended({records:[row('volume','Fresh Water 1 capacity',95)]}).tanks.length,0)});
+test('read DC power and AC loads if diagnostic codes and labels agree',()=>{let a=extractExtended({records:[row('Pdc','DC system power',150),row('Pac','AC loads',42)]});assert.equal(a.dcPower,150);assert.equal(a.acLoadsWatts,42)});
+test('MultiPlus inverting state maps to on',()=>{assert.equal(extractExtended({records:[row('State','MultiPlus VE.Bus state',9)]}).inverter,'on')});
+test('unknown inverter modes are not guessed as off',()=>{assert.equal(extractExtended({records:[row('State','MultiPlus VE.Bus state',3)]}).inverter,null)});
+test('do not invent telemetry from empty diagnostics',()=>{let a=extractExtended({records:[]});assert.equal(a.inverter,null);assert.equal(a.dcPower,null);assert.equal(a.tanks.length,0)});
+
+test('generic label is not a positive state',()=>assert.equal(extractExtended({records:[row('State','Inverter status','Inverter disabled')]}).inverter,null));
+
+test('VE.Bus with space indicates inverting',()=>assert.equal(extractExtended({records:[row('State','VE Bus state',9)]}).inverter,'on'));
+
+test('explicit inverter on/off text',()=>{assert.equal(extractExtended({records:[row('State','Inverter status','Inverter on')]}).inverter,'on');assert.equal(extractExtended({records:[row('State','Inverter status','Inverter off')]}).inverter,'off')});
+
+test('offline returns unknown power',()=>assert.equal(extractExtended({online:false,records:[row('Pdc','DC system power',150)]}).dcPower,null));
+
+test('offline has no tank readings',()=>assert.equal(extractExtended({status:'offline',records:[row('T','Fresh Water 1 level %',0)]}).tanks.length,0));
+
+test('stale DC readings are suppressed',()=>{const x=extractFreshSnapshot({records:[row('Pdc','DC system power',150,600)]},{nowSeconds:1000});assert.equal(x.status,'stale');assert.equal(x.dcPower,null)});
+
+test('fresh zero percent is not mistaken for missing',()=>{const x=extractFreshSnapshot({records:[row('T','Fresh Water 1 level %',0,995),row('T','Fresh Water 2 level %',0,997)]},{nowSeconds:1000});assert.equal(x.status,'fresh');assert.deepEqual(x.tanks.map(t=>t.percentage),[0,0])});
+test('offline suppresses inverter and tank data',()=>{const x=extractFreshSnapshot({online:false,records:[row('State','VE.Bus state',9,995),row('T','Fresh Water 1 level %',0,995)]},{nowSeconds:1000});assert.equal(x.status,'offline');assert.equal(x.inverter,null);assert.equal(x.tanks.length,0)});
+
+test('undated inverter state is unknown, not live',()=>{const x=extractFreshSnapshot({records:[{code:'State',description:'VE.Bus state',rawValue:9}]},{nowSeconds:1000});assert.equal(x.status,'unknown');assert.equal(x.inverter,null)});
+test('stale inverter is not mixed into fresh DC power',()=>{const x=extractFreshSnapshot({records:[row('State','VE.Bus state',9,100),row('Pdc','DC system power',42,998)]},{nowSeconds:1000});assert.equal(x.status,'fresh');assert.equal(x.inverter,null);assert.equal(x.dcPower,42)});
+test('future-dated diagnostic is not live',()=>{const x=extractFreshSnapshot({records:[row('Pdc','DC system power',42,1010)]},{nowSeconds:1000});assert.equal(x.status,'unknown');assert.equal(x.dcPower,null)});
+
+test('millisecond source timestamp is normalized',()=>{const x=extractFreshSnapshot({records:[row('Pdc','DC system power',42,1700000000000)]},{nowSeconds:1700000005});assert.equal(x.status,'fresh');assert.equal(x.dcPower,42)});
+
+test('grey water level zero remains valid',()=>{const x=extractExtended({records:[row('T','Grey Water 1 level %',0)]});assert.equal(x.tanks[0].percentage,0)});

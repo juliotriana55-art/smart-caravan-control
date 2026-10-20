@@ -1,0 +1,332 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smart Caravan — Exterior 3D</title><style>body{margin:0;background:#edf2f4;color:#193143;font:16px system-ui}main{max-width:1000px;margin:auto;padding:15px}h1{font-size:1.45rem}.sub{color:#516b78;line-height:1.5}.panel{background:white;border:1px solid #d2dfe4;border-radius:18px;padding:12px;margin:12px 0;box-shadow:0 7px 30px #0d304018}#view{height:480px;max-height:68vh;touch-action:none!important;-webkit-user-select:none;user-select:none;overscroll-behavior:contain;overflow:hidden;border-radius:14px;background:#f7f9fa}canvas{touch-action:none!important;-webkit-user-select:none;user-select:none}[hidden]{display:none!important}button,input{font:inherit;border-radius:10px;padding:11px;border:1px solid #b4cbd1}button{background:#0a817b;color:white;border:0;margin:4px;font-weight:650;min-height:44px}input{width:85px}label{display:inline-flex;gap:8px;align-items:center;margin:6px}.small{font-size:.88rem;color:#57717d}#status{font-weight:650;color:#345a65}a{color:#086f72}</style></head><body><main><h1>🚐 Smart Caravan — Exterior 3D</h1><p class="sub">Modelo exterior interactivo con carrocería perfilada, ventanas, puerta, doble eje, techo y lanza. Desliza horizontalmente sobre el modelo para girarlo 360°; desliza verticalmente para inclinarlo y pellizca con dos dedos para acercar. <strong>Es un modelo paramétrico de demostración, no una reconstrucción automática de tus fotografías.</strong></p><section class="panel"><div id="devTools" hidden><div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px"><label style="font-weight:650">Modelo 3D profesional (.glb) <input id="glbFile" type="file" accept=".glb,model/gltf-binary" style="width:220px"></label><button id="procedural" type="button">Volver al modelo editable</button></div><p class="small" id="modelInfo">Modelo geométrico de referencia. Puedes cargar un GLB optimizado desde tu dispositivo para visualizar un modelo de alta fidelidad; no se sube a ningún servidor.</p></div><div id="view" aria-label="Visor 3D de caravana exterior"></div><p id="status" role="status">Iniciando visor 3D…</p><button id="front">Frontal</button><button id="side">Lateral</button><button id="rear">Trasera</button><button id="roof">Techo</button><button id="reset">Vista inicial</button><button id="autoOrbit" aria-pressed="false">▶ Giro automático</button></section><section class="panel"><strong>Personalizar proporciones</strong><p class="small">La lanza de remolque marca el FRENTE (+X). La puerta está en el lateral IZQUIERDO (-Z) mirando hacia delante. Las direccionales están en el bumper bar TRASERO (-X), junto con las luces de freno y reversa.</p><div><label>Largo (m) <input id="length" type="number" min="5" max="10" step=".1" value="7.2"></label><label>Ancho (m) <input id="width" type="number" min="2" max="3" step=".1" value="2.4"></label><label>Alto (m) <input id="height" type="number" min="2.2" max="3.4" step=".1" value="2.7"></label></div><div><label>Color carrocería <input id="bodyColor" type="color" value="#f4f6f5"></label><label>Color de franjas <input id="stripeColor" type="color" value="#252b31"></label><label>Paneles solares <input id="solarPanels" type="number" min="0" max="12" step="1" value="3"></label></div><label>Marca / sticker <select id="brand"><option value="Royal Flair">Royal Flair</option><option value="Custom">Personalizada</option><option value="None">Sin marca</option></select></label><label>Nombre personalizado <input id="customBrand" type="text" maxlength="28" placeholder="Mi marca" style="width:155px"></label><div><label>Ventanas lado puerta <input id="windowsLeft" type="number" min="0" max="5" value="2"></label><label>Ventanas lado opuesto <input id="windowsRight" type="number" min="0" max="5" value="2"></label><label>Access doors <input id="accessDoors" type="number" min="0" max="4" step="1" value="2"></label><label>Tanques de agua <input id="waterTanks" type="number" min="0" max="4" step="1" value="2"></label><label>Ejes <select id="axles"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></label></div><div><label>Escalera plegable <select id="steps"><option value="1" selected>1 peldaño</option><option value="2">2 peldaños</option></select></label><label><input id="awning" type="checkbox" checked> Toldo</label><label><input id="gas" type="checkbox" checked> Cilindros de gas</label><label><input id="spare" type="checkbox" checked> Rueda de repuesto</label><label><input id="frontBox" type="checkbox" checked> Caja delantera</label></div><button id="build">Actualizar y guardar diseño</button><button id="restore" type="button">Restaurar valores iniciales</button><p id="saveStatus" class="small"></p><p class="small">Los stickers son aproximaciones tipográficas, no reproducciones exactas del león oficial. Los detalles son ilustrativos y editables. Las fotos cargadas en la app no se utilizan para reconstruir esta geometría.</p></section><p><a href="./pilot-5.html">← Regresar a Smart Caravan Control</a></p></main><script type="module">
+const $=id=>document.getElementById(id),status=$('status');
+$('devTools').hidden=new URLSearchParams(location.search).get('dev')!=='1';let professionalModel=null,modelObjectUrl=null;let T,scene,camera,renderer,group,yaw=-.68,pitch=.24,dist=15,drag=null,pointers=new Map(),autoOrbit=false,orbitFrame=null,orbitLast=0;
+try{
+T=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/+esm');
+scene=new T.Scene();scene.background=new T.Color('#f7f9fa');
+scene.add(new T.HemisphereLight('#ffffff','#a8b6c2',2.5));
+const sun=new T.DirectionalLight('#ffffff',2.4);sun.position.set(-4,12,9);scene.add(sun);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-14;sun.shadow.camera.right=14;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-14;
+camera=new T.PerspectiveCamera(38,1,.1,100);renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;$('view').append(renderer.domElement);
+const mat=(c,metal=0)=>new T.MeshStandardMaterial({color:c,metalness:metal,roughness:metal?.38:.72,side:T.DoubleSide});
+const white=mat('#f4f6f5'),dark=mat('#1b2d37'),glass=new T.MeshPhysicalMaterial({color:'#183543',metalness:.22,roughness:.08,clearcoat:1,clearcoatRoughness:.07,side:T.DoubleSide}),trim=mat('#273b45'),silver=mat('#a5b1b7',.6),rubber=mat('#1a2025'),red=mat('#252b31');
+function box(w,h,d,x,y,z,m){const a=new T.Mesh(new T.BoxGeometry(w,h,d),m);a.position.set(x,y,z);group.add(a);a.castShadow=true;a.receiveShadow=true;return a}
+function cylinder(r,h,x,y,z,m,rot=0){const a=new T.Mesh(new T.CylinderGeometry(r,r,h,24),m);a.position.set(x,y,z);a.rotation.x=rot;group.add(a);return a}
+function sidePanel(points,z,m){const shape=new T.Shape();shape.moveTo(points[0][0],points[0][1]);points.slice(1).forEach(p=>shape.lineTo(p[0],p[1]));shape.closePath();const mesh=new T.Mesh(new T.ShapeGeometry(shape),m);mesh.position.z=z;group.add(mesh);return mesh}
+function draw(){
+ const w=$('view').clientWidth,h=$('view').clientHeight;renderer.setSize(w,h,false);renderer.domElement.style.width='100%';renderer.domElement.style.height='100%';camera.aspect=w/h;camera.updateProjectionMatrix();
+ camera.position.set(Math.cos(yaw)*Math.cos(pitch)*dist,2+Math.sin(pitch)*dist,Math.sin(yaw)*Math.cos(pitch)*dist);camera.lookAt(0,1.8,0);renderer.render(scene,camera)
+}
+function build(){
+ if(professionalModel){scene.remove(professionalModel);professionalModel=null;}
+ $('modelInfo').textContent='Modelo geométrico editable activo. El GLB local no se almacena ni se sube.';
+ const configIds=['length','width','height','bodyColor','stripeColor','solarPanels','brand','customBrand','windowsLeft','windowsRight','accessDoors','waterTanks','axles','steps','awning','gas','spare','frontBox'];
+ const config=Object.fromEntries(configIds.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value]));
+ for(const id of ['accessDoors','waterTanks']){const n=Number($(id).value);if(!Number.isInteger(n)||n<0||n>4){status.textContent=id+': usa un número entre 0 y 4';return}}
+
+ white.color.set($('bodyColor').value);red.color.set($('stripeColor').value);
+ const solarN=Number($('solarPanels').value);if(!Number.isInteger(solarN)||solarN<0||solarN>12){status.textContent='Paneles solares: introduce un número entre 0 y 12';return}
+
+ const vals=['length','width','height'].map(id=>Number($(id).value));if(vals.some((v,i)=>!Number.isFinite(v)||v<[[5,10],[2,3],[2.2,3.4]][i][0]||v>[[5,10],[2,3],[2.2,3.4]][i][1])){status.textContent='Dimensiones fuera del rango permitido';return}
+ const [l,w,h]=vals;
+ if(group){scene.remove(group);group.traverse(o=>{o.geometry?.dispose()})}
+ group=new T.Group();scene.add(group);
+ // Car body has an angled nose, softened roof and rear taper, unlike a plain rectangular box.
+ const left=-l/2,right=l/2,base=.77,top=base+h;
+ const outline=[[left+.52,base],[right-.30,base],[right,base+.42],[right,top-.60],[right-.38,top-.08],[right-.74,top],[left+.55,top],[left+.12,top-.15],[left,top-.55],[left,base+.46]];
+ // One continuous extruded shell: avoid coplanar duplicate side walls and visible seams.
+ const poly=new T.Shape();outline.forEach((p,i)=>i?poly.lineTo(...p):poly.moveTo(...p));poly.closePath();
+ const solid=new T.Mesh(new T.ExtrudeGeometry(poly,{depth:w,bevelEnabled:true,bevelSize:.045,bevelThickness:.045,bevelSegments:4,steps:1}),white);solid.position.z=-w/2;solid.castShadow=true;solid.receiveShadow=true;group.add(solid);
+ // Distinct dark lower skirt and clean accent stripe
+ for(const z of [-w/2-.07,w/2+.07]){
+  sidePanel([[left+.4,base+.08],[right-.30,base+.08],[right-.15,base+.35],[right-.15,base+.70],[left+.16,base+.70]],z,trim);
+  box(l-.8,.045,.028,0,base+h*.68,z+(z>0?.04:-.04),red);
+  // Front is +X; when looking forward, the physical LEFT side is -Z. Door is on -Z.
+  if(z<0){
+   box(.82,1.77,.075,l*.08,base+1.07,z-.05,trim);box(.72,1.67,.08,l*.08,base+1.07,z-.10,white);
+   box(.30,.58,.09,l*.08,base+1.54,z-.16,glass);box(.07,.15,.12,l*.08+.29,base+1.07,z-.16,silver);
+   box(.90,.07,.37,l*.08,base+.16,z-.22,silver);
+  }
+  const windowCount=Math.max(0,Math.min(5,Number($(z<0?'windowsLeft':'windowsRight').value)||0));
+ const doorX=l*.08,doorHalf=.49;
+  const candidates=Array.from({length:11},(_,i)=>-l*.38+i*l*.076).filter(x=>z>0||Math.abs(x-doorX)>doorHalf+.53);
+  const chosen=Array.from({length:windowCount},(_,i)=>candidates[Math.min(candidates.length-1,Math.floor((i+.5)*candidates.length/windowCount))]);
+  const windows=chosen.map(x=>[x,Math.min(.95,l*.67/Math.max(windowCount,1)-.12)]);
+  for(const [x,ww] of windows){box(ww,.76,.09,x,base+h*.64,z+(z>0?.13:-.13),trim);box(ww-.09,.66,.11,x,base+h*.64,z+(z>0?.20:-.20),glass)}
+  // Removed fake decorative hatches.
+ }
+ // Royal Flair-inspired side graphics: black lower body and two-tone stripes.
+ const charcoal=mat('#101316'),slate=mat('#4a535c');
+ for(const z of [-w/2-.135,w/2+.135]){
+  const offset=z<0?-.016:.016;
+  sidePanel([[left+.43,base+.72],[right-.30,base+.72],[right-.12,base+.88],[right-.12,base+h*.34],[left+.23,base+h*.34]],z+offset,charcoal);
+  // Angular twin stripe and chevron motif approximating the reference photos.
+  sidePanel([[left+.48,base+h*.59],[right-.46,base+h*.59],[right-.65,base+h*.74],[left+.48,base+h*.74]],z+offset,slate);
+  sidePanel([[left+.32,base+h*.58],[left+1.1,base+h*.58],[left+1.46,base+h*.72],[left+.50,base+h*.72]],z+offset*.8,charcoal);
+  sidePanel([[right-2.55,base+h*.59],[right-2.36,base+h*.59],[right-1.95,base+h*.74],[right-2.14,base+h*.74]],z+offset*1.6,white);
+  box(l*.83,.032,.025,0,base+h*.76,z+(z<0?-.035:.035),silver);
+ }
+ // Service hatches, exterior outlets, vents and amber clearance lights.
+ const hatch=mat('#171d22'),vent=mat('#48545b'),amberSide=mat('#de8c20');
+ // Repeating pressed-metal tread pattern, inspired by the black exterior cladding.
+ const tc=document.createElement('canvas');tc.width=128;tc.height=128;
+ const ctx=tc.getContext('2d');ctx.fillStyle='#202428';ctx.fillRect(0,0,128,128);
+ for(let row=0;row<6;row++)for(let col=0;col<6;col++){
+  ctx.save();ctx.translate(col*26+(row%2)*13,row*24);ctx.rotate(-Math.PI/4);
+  ctx.fillStyle='#41484c';ctx.fillRect(-9,-2,18,4);
+  ctx.fillStyle='#687074';ctx.fillRect(-7,-2,14,1);ctx.restore();
+ }
+ const tex=new T.CanvasTexture(tc);tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.repeat.set(Math.max(5,l),2);
+ const tread=new T.MeshStandardMaterial({map:tex,roughness:.69,metalness:.22,side:T.DoubleSide});
+ for(const side of [-1,1]){
+  const z=side*(w/2+.175);
+  sidePanel([[left+.36,base+.13],[right-.27,base+.13],[right-.18,base+.36],[right-.18,base+.69],[left+.18,base+.69]],z,tread);
+ }
+
+ for(const sign of [-1,1]){
+  const side=sign*w/2,outer=sign*(w/2+.24);
+
+  // Access hatches must never overlap the entrance.
+  const accessN=Math.max(0,Math.min(4,Number($('accessDoors').value)||0));
+  const slots=[],chosen=[],doorCenter=l*.08;
+  for(let x=left+.75;x<=right-.70;x+=.08){
+   if(sign<0&&Math.abs(x-doorCenter)<.975)continue;
+   slots.push(x);
+  }
+  for(let k=0;k<accessN;k++){
+   let best=null,score=-Infinity;
+   for(const x of slots){
+    if(chosen.some(y=>Math.abs(x-y)<.88))continue;
+    const distance=chosen.length?Math.min(...chosen.map(y=>Math.abs(x-y))):-x;
+    if(distance>score){score=distance;best=x}
+   }
+   if(best===null)break;chosen.push(best);
+  }
+  for(const x of chosen){
+   box(.73,.53,.032,x,base+.89,outer-sign*.014,hatch);
+   box(.65,.45,.038,x,base+.89,outer+sign*.013,trim);
+   box(.11,.045,.047,x,base+1.085,outer+sign*.044,silver);
+  }
+  // No unverified generic vent.
+  for(const x of [-l*.40,0,l*.40])box(.14,.085,.08,x,base+.80,outer,amberSide);
+  // Wheel arch skirts and black mudflaps for every axle.
+  const axlesN=Number($('axles').value);
+  for(let i=0;i<axlesN;i++){
+   const x=-l*.18+(i-(axlesN-1)/2)*.85;
+   const arch=new T.Mesh(new T.TorusGeometry(.52,.075,8,32,Math.PI),hatch);
+   arch.rotation.z=Math.PI;arch.position.set(x,.51,side+sign*.19);group.add(arch);
+  }
+ }
+ // Rear bumper lighting: A-frame is at +X, rear bumper at -X.
+ const amber=new T.MeshStandardMaterial({color:'#f0a326',emissive:'#804000',emissiveIntensity:.16});
+ const stop=new T.MeshStandardMaterial({color:'#c72d38',emissive:'#560a12',emissiveIntensity:.13});
+ const reverse=new T.MeshStandardMaterial({color:'#e5e9e8',roughness:.28});
+ // Bumper spans the entire width of the rear, behind the caravan body.
+ box(.22,.28,w+.18,left-.27,base+.28,0,trim);
+ box(.11,.12,w+.02,left-.42,base+.24,0,silver);
+ for(const sign of [-1,1]){
+  const z=sign*(w/2-.31);
+  box(.10,.20,.64,left-.435,base+.43,z,trim);
+  box(.12,.13,.19,left-.50,base+.43,z+sign*.22,amber);
+  box(.12,.13,.19,left-.50,base+.43,z,stop);
+  box(.12,.13,.14,left-.50,base+.43,z-sign*.19,reverse);
+ }
+ // Rear-view camera: high and centered on rear wall (-X), with black housing and lens.
+ box(.17,.14,.30,left-.13,top-.30,0,trim);
+ const cameraLens=new T.Mesh(new T.SphereGeometry(.075,12,10),glass);
+ cameraLens.position.set(left-.24,top-.32,0);group.add(cameraLens);
+ // Number-plate holder mounted to the rear bumper, offset from the spare wheel.
+ // The holder is a flat black backing with a light plate and a narrow red/white lamp.
+ const plateZ=w*.31;
+ box(.075,.48,.70,left-.49,base+.12,plateZ,trim);
+ box(.083,.24,.57,left-.54,base+.04,plateZ,white);
+ box(.086,.09,.60,left-.54,base+.27,plateZ,stop);
+ // Front and rear panoramic window panels conform to the tapered nose.
+ // The reference has a solid white front with dark lower stone guard, not a floating front window.
+ // Nose remains part of the continuous body shell; add flush protective cladding only.
+ const noseGuard=mat('#111619');
+ box(.055,h*.30,w*.88,right+.014,base+h*.23,0,noseGuard);
+ box(.05,.55,w*.55,left-.028,base+h*.67,0,glass);
+ // Decals are approximate vector typography, not the official Royal Flair lion artwork.
+ const brand=$('brand').value==='Custom'?$('customBrand').value.trim():$('brand').value;
+ if(brand&&brand!=='None'){
+  const labelCanvas=document.createElement('canvas');labelCanvas.width=1024;labelCanvas.height=240;const c=labelCanvas.getContext('2d');c.clearRect(0,0,1024,180);c.fillStyle='#12191e';c.textAlign='center';
+  c.font='bold 90px Georgia,serif';c.fillText(brand.slice(0,28).toUpperCase(),512,119,990);
+  if(brand.toLowerCase()==='royal flair'){c.font='38px Georgia,serif';c.letterSpacing='10px';c.fillText('CARAVANS',512,182,600)}
+  const labelTexture=new T.CanvasTexture(labelCanvas);const decal=new T.Mesh(new T.PlaneGeometry(Math.min(l*.42,3.1),.70),new T.MeshBasicMaterial({map:labelTexture,transparent:true,side:T.DoubleSide}));
+  decal.position.set(-l*.08,base+h*.85,w/2+.067);group.add(decal);
+  const other=decal.clone();other.position.z=-w/2-.067;other.rotation.y=Math.PI;group.add(other);
+  const nose=decal.clone();nose.rotation.y=Math.PI/2;nose.position.set(right+.066,base+h*.79,0);group.add(nose);
+ }
+ // Roof details
+// Solar panels laid out in a bounded grid on the roof.
+ for(let i=0;i<solarN;i++){
+  const columns=Math.min(3,solarN),rows=Math.ceil(solarN/columns),col=i%columns,row=Math.floor(i/columns);
+  const panelLength=Math.min(1.55,(l-1.6)/rows-.10),panelWidth=Math.min(.62,(w-.36)/columns-.10);
+  const px=(row-(rows-1)/2)*(panelLength+.10),pz=(col-(columns-1)/2)*(panelWidth+.10);
+  box(panelLength,.045,panelWidth,px,top+.14,pz,trim);
+  box(panelLength-.08,.052,panelWidth-.08,px,top+.17,pz,glass);
+ }
+ box(.65,.15,.65,l*.20,top+.12,0,white);
+ // Tandem wheels with silver hubcaps
+ const axles=Number($('axles').value);for(let a=0;a<axles;a++)for(const z of [-w/2-.17,w/2+.17]){const x=-l*.18+(a-(axles-1)/2)*.85;
+  cylinder(.47,.24,x,.50,z,rubber,Math.PI/2);
+  cylinder(.29,.257,x,.50,z,trim,Math.PI/2);
+  cylinder(.225,.268,x,.50,z,mat('#434a50',.65),Math.PI/2);
+  for(let i=0;i<8;i++){
+   const a=i*Math.PI/4;
+   const bolt=new T.Mesh(new T.SphereGeometry(.028,8,6),silver);
+   bolt.position.set(x+Math.cos(a)*.175,.50+Math.sin(a)*.175,z+(z>0?.145:-.145));
+   group.add(bolt);
+  }
+  cylinder(.075,.276,x,.50,z,silver,Math.PI/2);
+ }
+ // Royal Flair-style folding entry step: 1 or 2 treads, never three.
+ const doorX=l*.08,ladderZ=-w/2,stepCount=Number($('steps').value);
+ for(let step=0;step<stepCount;step++){
+  const y=base-.13-step*.28,z=ladderZ-.52-step*.23;
+  box(.92,.065,.42,doorX,y,z,trim);
+  for(let groove=-3;groove<=3;groove++)box(.83,.012,.018,doorX,y+.039,z+groove*.045,silver);
+  // Folding scissor arms on both ends of the tread.
+  for(const dx of [-.40,.40]){
+   const arm=box(.065,.075,.58,doorX+dx,y+.16,z+.22,trim);
+   arm.rotation.x=step%2===0?-.55:.55;
+   cylinder(.065,.075,doorX+dx,y+.12,z+.10,silver,Math.PI/2);
+  }
+ }
+ // Optional awning on the door (-Z) side.
+ if($('awning').checked){box(l*.80,.14,.17,-.05,top-.25,-w/2-.11,trim);for(const x of [-l*.37,l*.33]){box(.065,h*.74,.07,x,base+h*.54,-w/2-.09,trim);box(.18,.12,.10,x,base+.16,-w/2-.11,trim)}}
+ // Optional front gas bottles and storage box.
+ if($('frontBox').checked)box(.84,.83,w*.63,right+.35,base+.44,0,trim);
+ if($('gas').checked)for(const z of [-.32,.32]){cylinder(.20,.51,right+.90,base+.38,z,silver);cylinder(.12,.08,right+.90,base+.68,z,trim)}
+ // Optional spare wheel on the rear bumper.
+ if($('spare').checked){const wheel=new T.Mesh(new T.TorusGeometry(.40,.15,12,32),rubber);wheel.rotation.y=Math.PI/2;wheel.position.set(left-.68,base+1.13,0);group.add(wheel);cylinder(.24,.13,left-.68,base+1.13,0,silver,Math.PI/2); }
+ // Visible underbody chassis beams and corner stabilisers.
+ for(const z of [-w*.30,w*.30]){
+  box(l*.92,.14,.12,0,.52,z,trim);
+  for(const x of [left+.65,right-.75]){
+   box(.10,.37,.12,x,.33,z,trim);
+   box(.31,.045,.24,x,.14,z,trim);
+  }
+ }
+ for(const x of [-l*.34,l*.30])box(.12,.11,w*.65,x,.50,0,trim);
+ // Connected A-frame chassis: both arms start beneath the nose and meet at the coupler.
+ const hitchY=base-.18,tipX=right+1.85;
+ for(const sign of [-1,1]){
+  const p1=new T.Vector3(right-.55,hitchY,sign*w*.35);
+  const p2=new T.Vector3(tipX,hitchY,0);
+  const direction=new T.Vector3().subVectors(p2,p1);
+  const rail=new T.Mesh(new T.BoxGeometry(direction.length(),.13,.11),trim);
+  rail.position.copy(p1).add(p2).multiplyScalar(.5);
+  rail.rotation.y=-Math.atan2(direction.z,direction.x);
+  rail.castShadow=true;group.add(rail);
+ }
+ box(.45,.14,.24,tipX-.04,hitchY,0,trim);
+ box(.22,.15,.19,tipX+.23,hitchY+.03,0,silver);
+ // Jockey-wheel stem, fork and tyre form one continuous assembly.
+ const jockeyX=right+1.15;
+ cylinder(.055,.58,jockeyX,hitchY-.30,0,silver);
+ box(.15,.23,.12,jockeyX,hitchY-.66,0,trim);
+ const jockeyWheel=new T.Mesh(new T.TorusGeometry(.16,.055,8,24),rubber);
+ jockeyWheel.rotation.y=Math.PI/2;jockeyWheel.position.set(jockeyX,hitchY-.83,0);group.add(jockeyWheel);
+ // Safety-chain loops and gas locker rest directly on the frame.
+ for(const z of [-.23,.23]){
+  const loop=new T.Mesh(new T.TorusGeometry(.085,.018,6,16),silver);
+  loop.rotation.x=Math.PI/2;loop.position.set(tipX-.25,hitchY-.10,z);group.add(loop);
+ }
+ // Underbody fresh/grey water tanks with straps, service ports and drain outlets.
+ const tankN=Math.max(0,Math.min(4,Number($('waterTanks').value)||0));
+ const tankBody=mat('#343b3d'),tankBand=mat('#777f81'),pipe=mat('#292f32');
+ for(let i=0;i<tankN;i++){
+  const x=(-.35+(i+.5)*(.70/tankN))*l;
+  const tankL=Math.min(1.2,l*.68/Math.max(tankN,1)-.12);
+  box(tankL,.26,w*.62,x,.38,0,tankBody);
+  for(const strap of [-.32,.32])box(.065,.30,w*.66,x+strap*tankL,.39,0,tankBand);
+  box(.16,.08,.16,x,.19,-w*.24,pipe);
+  cylinder(.07,.10,x,.14,-w*.25,pipe);
+ }
+ // Low-profile roof skylights.
+ for(const x of [left+1.35,right-1.40]){
+  box(.56,.08,.49,x,top+.10,0,trim);
+  box(.46,.035,.39,x,top+.15,0,glass);
+ }
+ // Join the rear spare-wheel carrier physically to the bumper.
+ if($('spare').checked){box(.58,.11,.10,left-.51,base+1.10,0,trim);box(.12,.55,.10,left-.57,base+.85,0,trim)}
+ // Ground plane, soft shadow
+ const ground=new T.Mesh(new T.PlaneGeometry(40,40),new T.MeshStandardMaterial({color:'#edf0f0',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.06;ground.receiveShadow=true;group.add(ground);
+ try{localStorage.setItem('scc-exterior-3d-config-v1',JSON.stringify(config));$('saveStatus').textContent='Diseño guardado en este navegador.'}catch(e){$('saveStatus').textContent='No se pudo guardar el diseño: '+e.message}status.textContent='Modelo 3D actualizado: '+solarN+' paneles, '+axles+' eje(s), accesorios personalizados. Fotos no analizadas automáticamente.';draw();
+}
+$('glbFile').addEventListener('change',async e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ if(!/\\.glb$/i.test(file.name)||file.size>40*1024*1024){$('modelInfo').textContent='Selecciona un archivo .glb de máximo 40 MB para móviles.';return}
+ $('modelInfo').textContent='Cargando modelo GLB…';
+ let url=null;
+ try{
+  const module=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/loaders/GLTFLoader.js');
+  const loader=new module.GLTFLoader();url=URL.createObjectURL(file);
+  const gltf=await loader.loadAsync(url);
+  const model=gltf.scene;
+  model.updateMatrixWorld(true);
+  const bounds=new T.Box3().setFromObject(model);
+  const size=bounds.getSize(new T.Vector3());
+  if(Math.max(size.x,size.y,size.z)<.001)throw Error('El modelo no contiene geometría visible');
+  // Normalize unit scale and centre to our existing camera orbit.
+  const scale=7.2/Math.max(size.x,size.z);
+  model.scale.multiplyScalar(scale);model.updateMatrixWorld(true);
+  const normalized=new T.Box3().setFromObject(model),center=normalized.getCenter(new T.Vector3());
+  model.position.sub(new T.Vector3(center.x,normalized.min.y,center.z));
+  model.traverse(obj=>{if(obj.isMesh){obj.castShadow=true;obj.receiveShadow=true}});
+  if(professionalModel)scene.remove(professionalModel);
+  if(group)scene.remove(group);
+  professionalModel=model;scene.add(model);
+  dist=15;yaw=-.68;pitch=.24;draw();
+  $('modelInfo').textContent='GLB local: '+file.name+' — vista 360° activa. No se ha enviado a servidores.';
+ }catch(err){$('modelInfo').textContent='No se pudo cargar el GLB: '+err.message}
+ finally{if(url)URL.revokeObjectURL(url)}
+});
+$('procedural').onclick=()=>{if(professionalModel){scene.remove(professionalModel);professionalModel=null}build()};
+function orbitTick(now){if(!autoOrbit)return;if(orbitLast)yaw+=(Math.min(now-orbitLast,80)/1000)*.34;orbitLast=now;draw();orbitFrame=requestAnimationFrame(orbitTick)}
+function stopOrbit(){autoOrbit=false;orbitLast=0;if(orbitFrame)cancelAnimationFrame(orbitFrame);$('autoOrbit').textContent='▶ Giro automático';$('autoOrbit').setAttribute('aria-pressed','false')}
+$('autoOrbit').onclick=()=>{if(autoOrbit){stopOrbit();return}autoOrbit=true;orbitLast=0;$('autoOrbit').textContent='⏸ Detener giro';$('autoOrbit').setAttribute('aria-pressed','true');orbitFrame=requestAnimationFrame(orbitTick)};
+function resize(){draw()}window.addEventListener('resize',resize);
+const v=$('view');
+v.style.touchAction='none';renderer.domElement.style.touchAction='none';
+// Safari fallback: cancel native page scrolling for touches beginning inside the viewer.
+let touchLast=null,touchPinch=null;
+v.addEventListener('touchstart',e=>{stopOrbit();e.preventDefault();if(e.touches.length===1){touchLast=[e.touches[0].clientX,e.touches[0].clientY];touchPinch=null}else if(e.touches.length===2){touchLast=null;touchPinch=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY)}},{passive:false});
+v.addEventListener('touchmove',e=>{e.preventDefault();if(e.touches.length===1){const t=e.touches[0];if(touchLast){yaw+=(t.clientX-touchLast[0])/Math.max(v.clientWidth,260)*Math.PI*2;pitch=Math.max(-.28,Math.min(1.42,pitch+(touchLast[1]-t.clientY)/Math.max(v.clientHeight,260)*2.1))}touchLast=[t.clientX,t.clientY]}else if(e.touches.length===2){const now=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(touchPinch&&now>0)dist=Math.max(7,Math.min(32,dist*touchPinch/now));touchPinch=now;touchLast=null}draw()},{passive:false});
+v.addEventListener('touchend',e=>{e.preventDefault();touchLast=null;touchPinch=null},{passive:false});
+v.addEventListener('touchcancel',()=>{touchLast=null;touchPinch=null},{passive:false});
+let lastPinch=null;
+function distanceBetweenPointers(){const p=[...pointers.values()];return p.length===2?Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]):null}
+v.addEventListener('pointerdown',e=>{
+ if(e.pointerType==='touch')return;stopOrbit();
+ e.preventDefault();try{v.setPointerCapture(e.pointerId)}catch(_){}
+ pointers.set(e.pointerId,[e.clientX,e.clientY]);
+ lastPinch=distanceBetweenPointers();
+},{passive:false});
+v.addEventListener('pointermove',e=>{
+ if(e.pointerType==='touch'||!pointers.has(e.pointerId))return;
+ e.preventDefault();
+ const old=pointers.get(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY]);
+ if(pointers.size===1){
+  // One complete 360° rotation requires roughly one screen-width swipe.
+  const width=Math.max(v.clientWidth,260);
+  yaw+=(e.clientX-old[0])/width*Math.PI*2;
+  pitch=Math.max(-.28,Math.min(1.42,pitch+(old[1]-e.clientY)/Math.max(v.clientHeight,260)*2.1));
+ }else if(pointers.size===2){
+  const now=distanceBetweenPointers();
+  if(lastPinch&&now&&now>0)dist=Math.max(7,Math.min(32,dist*lastPinch/now));
+  lastPinch=now;
+ }
+ draw();
+},{passive:false});
+function end(e){pointers.delete(e.pointerId);lastPinch=distanceBetweenPointers();try{v.releasePointerCapture(e.pointerId)}catch(_){}}
+for(const type of ['pointerup','pointercancel','lostpointercapture'])v.addEventListener(type,end);
+v.addEventListener('wheel',e=>{e.preventDefault();dist=Math.max(7,Math.min(32,dist+Math.sign(e.deltaY)));draw()},{passive:false});
+$('front').onclick=()=>{yaw=0;pitch=.12;draw()};$('side').onclick=()=>{yaw=-Math.PI/2;pitch=.15;draw()};$('rear').onclick=()=>{yaw=Math.PI;pitch=.12;draw()};$('roof').onclick=()=>{pitch=1.32;draw()};$('reset').onclick=()=>{yaw=-.68;pitch=.24;dist=15;draw()};$('build').onclick=build;
+const ids=['length','width','height','bodyColor','stripeColor','solarPanels','brand','customBrand','windowsLeft','windowsRight','accessDoors','waterTanks','axles','steps','awning','gas','spare','frontBox'];
+try{const stored=JSON.parse(localStorage.getItem('scc-exterior-3d-config-v1')||'null');if(stored)for(const id of ids){if(stored[id]===undefined)continue;const el=$(id);if(el.type==='checkbox')el.checked=Boolean(stored[id]);else el.value=stored[id]}}catch(e){$('saveStatus').textContent='No se pudo leer el diseño anterior.'}
+$('restore').onclick=()=>{try{localStorage.removeItem('scc-exterior-3d-config-v1')}catch(e){}location.reload()};
+build();
+}catch(e){status.textContent='No se pudo abrir el visor 3D: '+e.message}
+</script></body></html>

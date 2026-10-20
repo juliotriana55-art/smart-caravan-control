@@ -1,0 +1,24 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {assessReading, sanitizeMetrics, snapshotFromVerifiedResponse, restoreSnapshot, MAX_FRESH_AGE_MS} from './freshness.mjs';
+
+const NOW=Date.parse('2026-10-19T08:00:00Z');
+const metrics={soc:82,voltage:13.21,current:-3.1,solarWatts:225,inverter:'on'};
+const check=(changes={})=>assessReading({mode:'vrm',data:metrics,updated:new Date(NOW-60000).toISOString(),transportOk:true,now:NOW,...changes});
+test('1. Connected VRM with timestamp is fresh',()=>{const s=check();assert.equal(s.status,'fresh');assert.equal(s.ageMs,60000);assert.equal(s.isLive,false)});
+test('2. Connection fails after fresh reading: cached values are offline, not fresh',()=>{assert.equal(check().status,'fresh');assert.equal(check({transportOk:false}).status,'offline')});
+test('3. Outage lasting 30 minutes remains offline',()=>{assert.equal(check({transportOk:false,now:NOW+30*60000}).status,'offline')});
+test('4. Reconnected but source timestamp unchanged becomes stale',()=>{assert.equal(check({now:NOW+30*60000}).status,'stale')});
+test('5. Reconnected with newly updated VRM reading recovers fresh',()=>{assert.equal(check({now:NOW+30*60000,updated:new Date(NOW+29*60000).toISOString()}).status,'fresh')});
+test('6. Source timestamp exactly at freshness boundary',()=>{assert.equal(check({updated:new Date(NOW-MAX_FRESH_AGE_MS).toISOString()}).status,'fresh');assert.equal(check({updated:new Date(NOW-MAX_FRESH_AGE_MS-1).toISOString()}).status,'stale')});
+test('7. Missing timestamp is unknown while connected',()=>{assert.equal(check({updated:null}).status,'unknown')});
+test('8. Missing timestamp and no connection is offline',()=>{assert.equal(check({updated:null,transportOk:false}).status,'offline')});
+test('9. Future timestamp beyond allowed skew is unknown',()=>{assert.equal(check({updated:new Date(NOW+6*60000).toISOString()}).status,'unknown')});
+test('10. No metric readings: waiting online, error offline',()=>{assert.equal(check({data:{},transportOk:true}).status,'waiting');assert.equal(check({data:null,transportOk:false}).status,'error')});
+test('11. Demo values never masquerade as VRM',()=>{assert.equal(check({mode:'demo'}).status,'demo')});
+test('12. Sanitizer rejects nonfinite and nonnumeric metrics',()=>{const d=sanitizeMetrics({soc:NaN,current:Infinity,voltage:'13.2',solarWatts:12});assert.equal(d.soc,null);assert.equal(d.current,null);assert.equal(d.voltage,null);assert.equal(d.solarWatts,12)});
+test('13. Snapshot requires verified read-only VRM and installation scope',()=>{assert.equal(snapshotFromVerifiedResponse({source:'demo',readOnly:true,installationId:1013398,data:metrics}),null);assert.equal(snapshotFromVerifiedResponse({source:'vrm',readOnly:false,installationId:1013398,data:metrics}),null)});
+test('14. Snapshot round-trip persists readings, not secrets',()=>{const r={source:'vrm',readOnly:true,installationId:1013398,data:metrics,updated:new Date(NOW).toISOString(),accessToken:'TOP_SECRET',authorization:'Bearer ABC'};const snap=snapshotFromVerifiedResponse(r,NOW);assert.ok(snap);assert.equal(JSON.stringify(snap).includes('TOP_SECRET'),false);assert.equal(JSON.stringify(snap).includes('Bearer'),false);assert.equal(restoreSnapshot(JSON.stringify(snap),1013398).data.soc,82)});
+test('15. Cache belonging to another VRM installation cannot be restored',()=>{const snap=snapshotFromVerifiedResponse({source:'vrm',readOnly:true,installationId:1013398,data:metrics});assert.equal(restoreSnapshot(snap,9999999),null)});
+test('16. Malformed local cache is ignored safely',()=>{assert.equal(restoreSnapshot('{broken',1013398),null);assert.equal(restoreSnapshot(null,1013398),null)});
+test('17. Empty/invalid telemetry cannot be saved',()=>{assert.equal(snapshotFromVerifiedResponse({source:'vrm',readOnly:true,installationId:1013398,data:{soc:'unknown'}}),null)});

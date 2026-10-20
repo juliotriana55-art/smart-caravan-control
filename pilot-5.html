@@ -1,0 +1,164 @@
+<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#081b2b"><title>Smart Caravan Control 5 — Unified Pilot</title><style>
+:root{font:16px system-ui,-apple-system,sans-serif;color:#eaf8ff;background:#081b2b}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% -12%,#245571,#081b2b 65%)}main{max-width:1120px;margin:auto;padding:22px 15px 65px}h1{font-size:clamp(1.6rem,5vw,2.6rem);margin:8px 0}h2{font-size:1.17rem;margin:0 0 12px}.eyebrow{color:#75e5d1;font-size:.76rem;letter-spacing:.14em;font-weight:800}.muted{color:#bad2dd;line-height:1.5}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.card{background:#123348;border:1px solid #365e72;border-radius:18px;padding:18px;min-width:0}.wide{grid-column:1/-1}.metricGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.metric{background:#082538;border-radius:11px;padding:11px}.number{font-size:1.7rem;font-weight:800}.tag{font-size:.75rem;color:#80f0d7;font-weight:750}.warn{color:#ffcd87;font-weight:700}.btn,button{font:inherit;font-weight:730;background:#45ddc4;color:#05252a;border:0;border-radius:10px;padding:11px 13px;margin:6px 6px 4px 0;cursor:pointer}.secondary{background:#28536b;color:#edfaff}label{display:block;font-size:.9rem;margin:10px 0 5px}input,textarea,select{width:100%;background:#081f30;border:1px solid #50768c;border-radius:10px;padding:11px;color:#fff;font:inherit}textarea{min-height:85px}.answer{white-space:pre-wrap;background:#081e2e;border:1px solid #30586c;padding:14px;border-radius:12px;min-height:56px;margin-top:12px}.photoGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}.photo{position:relative;background:radial-gradient(circle,#336079,#081e2d 80%);border:1px solid #3a6478;border-radius:12px;padding:9px}.photo img{width:100%;height:170px;object-fit:contain;filter:drop-shadow(0 8px 9px #0009)}.photo button{width:100%}.stage{min-height:255px;position:relative;background:linear-gradient(135deg,#153e56,#0a1e2e);border:1px dashed #547d8c;border-radius:15px;padding:10px}.stage img{width:100%;max-height:340px;object-fit:contain;display:block;filter:drop-shadow(0 10px 12px #0008)}.pin{position:absolute;background:#43ddbf;border:2px solid #061b28;color:#062c31;border-radius:22px;padding:7px 10px;font-size:.77rem;font-weight:800;box-shadow:0 5px 15px #0006}.small{font-size:.78rem;color:#bdd0dc}.notice{background:#173849;border-left:4px solid #81dcca;padding:12px;margin:14px 0}.links a{color:#87efda;margin-right:16px}a{color:#86e8d6}@media(max-width:690px){.grid,.metricGrid{grid-template-columns:1fr}.wide{grid-column:auto}}:focus-visible{outline:3px solid #fff;outline-offset:3px}</style></head><body><main>
+<div class="eyebrow">SMART CARAVAN CONTROL · 5.0 UNIFIED PILOT</div><h1>🚐 Your Caravan Companion</h1><p class="muted">One place to test caravan profile, Jay AI voice, photo gallery, equipment map and VRM connection states. <strong>This lab uses simulated telemetry and local-only photos.</strong> Generative AI and automatic AI scanning require a separate authorised backend and are not enabled here.</p>
+<div class="notice"><strong>Protection:</strong> No equipment controls, VRM credentials, cloud photo uploads or production Worker changes. This experiment cannot control your caravan.</div>
+<section class="notice" id="cerboPreflight"><strong>Monday 19 Oct — 5-minute Cerbo preflight</strong><p class="small">This pilot displays SIMULATED values, not live Cerbo or VRM telemetry.</p><ol><li>With the owner’s permission, connect Cerbo GX to internet and verify the VRM installation is online.</li><li>Check battery voltage, SOC and timestamp directly in VRM. Never share tokens or passwords.</li><li>On iPhone test Jay AI by text, then try Talk twice consecutively and record any Safari errors.</li></ol><p class="small">Live read-only integration is NOT verified. Do not treat pilot readings as actual measurements.</p></section><div class="grid">
+<section class="card"><h2>⚡ Victron Intelligence</h2><div class="tag">SIMULATED DATA — NOT CERBO GX LIVE</div><div class="metricGrid"><div class="metric">SOC<div id="soc" class="number">82%</div></div><div class="metric">Voltage<div id="voltage" class="number">13.21 V</div></div><div class="metric">Solar<div id="solar" class="number">225 W</div></div></div><p id="status" role="status" class="tag"></p><p id="sampleTime" class="small"></p><button id="fresh">New sample</button><button id="offline" class="secondary">Lose internet</button><button id="stale" class="secondary">Old reading</button><button id="recover">Recover</button><p class="small">All four buttons simulate a state locally, not actual network changes.</p><p class="links"><a href="https://vrm.victronenergy.com/installation/1013398/dashboard" target="_blank" rel="noopener noreferrer">VRM dashboard ↗</a><a href="https://juliotriana55-art.github.io/smart-caravan-control/" target="_blank" rel="noopener noreferrer">Existing live app ↗</a></p></section>
+<section class="card"><h2>🏡 My Caravan</h2><label for="brand">Manufacturer</label><input id="brand" placeholder="Piazza"><label for="model">Model</label><input id="model" placeholder="Off-road family"><label for="solarCount">Solar panels</label><input id="solarCount" type="number" min="0" max="30" value="2"><label for="solarLoc">Solar panel location (optional)</label><input id="solarLoc" placeholder="On roof — front section"><label for="batteryLoc">Battery location</label><input id="batteryLoc" placeholder="Under bed"><label for="heaterLoc">Diesel heater location</label><input id="heaterLoc" placeholder="Under lounge"><button id="save">Save profile on this device</button><p id="saveStatus" class="small">Changes are local to this browser.</p></section>
+<section class="card wide"><h2>🧠 Jay AI — Context + Voice Prototype</h2><p class="muted">Ask about registered equipment, battery readings or internet status. Replies explain data limitations. Not yet connected to a generative AI model.</p><button class="secondary prompt" data-question="Where are my batteries?">Where are my batteries?</button><button class="secondary prompt" data-question="How much solar do I have?">Solar panels?</button><button class="secondary prompt" data-question="Can I trust the battery reading?">Is the reading current?</button><label for="question">Question</label><input id="question" placeholder="Ask about your caravan"><label for="lang">Voice language</label><select id="lang"><option value="en-AU">English (Australia)</option><option value="es-ES">Español</option></select><button id="ask">Ask Jay AI</button><button id="talk" class="secondary">🎙️ Talk</button><button id="speak" class="secondary">🔊 Speak answer</button><div id="answer" class="answer" aria-live="polite">Ready. Ask a question.</div><p id="voiceStatus" class="small">Safari requires permission for microphone access. Tap Talk to start a single question.</p><h3>Recent questions (this browser)</h3><button id="clearHistory" class="secondary">Clear Jay AI history</button><ol id="jayHistory"></ol><p class="small">Questions and answers are stored locally on this browser, not uploaded.</p></section>
+<section class="card wide"><h2>📷 Caravan Studio — Multiple photos</h2><p class="muted">Add exterior and interior references from your gallery. They remain in local IndexedDB and can be removed individually. The photo is not sent to an AI service.</p><label for="photos">Choose up to 6 caravan photos</label><input id="photos" type="file" accept="image/*" multiple><p id="photoStatus" class="small">No images uploaded to a server.</p><details><summary>Administrar fotos guardadas (opcional)</summary><div id="gallery" class="photoGrid"></div></details><p class="warn">AI background removal and 3D reconstruction: not connected. The stage below displays the original photo without pretending to remove its background.</p></section>
+<section class="card wide" id="digitalTwin"><h2>🚐 My Caravan — Modelo exterior 3D</h2><p><a href="./exterior-3d.html" style="display:inline-block;background:#43d5ba;color:#082337;padding:14px;border-radius:12px;font-weight:800;text-decoration:none">🚐 Abrir modelo exterior 3D — girar con el dedo</a></p><p>Objetivo: modelo 3D exterior realista que puedas girar con el dedo. La reconstrucción automática de fotos aún no está conectada. El prototipo de caja fue descartado.</p><p id="twinStatus" class="small">Tus fotografías se conservan para la futura reconstrucción, pero no se muestran aquí.</p><details><summary>Herramientas de diagnóstico: composición fotográfica 2D</summary><div id="twinViews" class="photoGrid"></div><canvas id="twinSheet" width="1200" height="900" style="width:100%;height:auto;background:#0b2434"></canvas><button id="makeSheet" type="button">Generar composición de prueba</button><button id="exportSheet" type="button" disabled>Guardar PNG</button></details></section>
+<section class="card wide"><h2>📐 Guided Caravan Scan — Photo Capture Plan</h2><p class="muted">Take or choose one photo for each of the six views below. Each slot saves locally and can be replaced. This is a capture workflow, <strong>not automated 3D reconstruction</strong>.</p><div id="captureList"></div><p id="captureProgress" class="tag" aria-live="polite"></p><button id="resetCapture" class="secondary">Remove all six guided photos</button></section>
+<section class="card"><h2>🔋 Estimated Battery Autonomy</h2><p class="muted">Offline calculator using values you enter manually. It is not based on live Victron data.</p><label for="capacity">Usable battery capacity (Wh)</label><input id="capacity" type="number" min="1" max="100000" value="2000"><label for="manualSoc">Battery SOC (%)</label><input id="manualSoc" type="number" min="0" max="100" value="82"><label for="manualLoad">Net discharge (W)</label><input id="manualLoad" type="number" min="0" max="20000" value="150"><button id="estimate">Estimate time</button><div id="autonomyResult" class="answer" aria-live="polite">Enter your caravan's verified battery specifications.</div></section>
+<section class="card wide"><h2>📍 Digital Twin — Equipment Map Prototype</h2><p class="muted">Select a photo and tap to place equipment markers. These are manually placed visual pins, not an automatic scan of hidden components.</p><label for="markerType">Equipment marker</label><select id="markerType"><option value="🔋 Battery">🔋 Battery</option><option value="☀️ Solar">☀️ Solar</option><option value="🔥 Diesel heater">🔥 Diesel heater</option><option value="🔌 Inverter">🔌 Inverter</option></select><div id="stage" class="stage" role="img" aria-label="Interactive caravan photo with equipment markers"><p id="stageHint">Select a photo from the gallery to place markers.</p></div><button id="clearPins" class="secondary">Clear markers</button><button id="movePin" class="secondary" type="button">Move selected</button><button id="deletePin" class="secondary" type="button">Delete selected</button><p id="pinEditStatus" class="small" role="status">Select a marker to edit it.</p><p class="small">Markers are manual annotations saved with each photo on this device. They are not verified component locations.</p></section>
+</div><p class="small">Experimental lab: client-only prototype. No AI API calls, subscriptions or production deployment.</p></main><script src="experiments/jay-ai/contextual-answer.js"></script><script src="experiments/jay-ai/safari-speech-session.js"></script><script>
+'use strict';
+const $=id=>document.getElementById(id);const fields=['brand','model','solarCount','solarLoc','batteryLoc','heaterLoc'];const profileKey='scc-5-pilot-profile';const data={soc:82,voltage:13.21,solar:225};let connection='fresh',stamp=Date.now(),lastAnswer='',activeImage=null,activePhoto=null,stageUrl=null,urls=[],pins=[];
+function profile(){return Object.fromEntries(fields.map(id=>[id,$(id).value.trim()]))}
+function display(){ $('soc').textContent=data.soc+'%';$('voltage').textContent=data.voltage.toFixed(2)+' V';$('solar').textContent=data.solar+' W';$('status').textContent={fresh:'FRESH (simulated)',offline:'OFFLINE — last known sample',stale:'STALE — source timestamp is old'}[connection];$('status').className=connection==='fresh'?'tag':'warn';$('sampleTime').textContent='Simulated source timestamp: '+new Date(stamp).toLocaleString()}
+$('fresh').onclick=()=>{connection='fresh';stamp=Date.now();display()};$('offline').onclick=()=>{connection='offline';display()};$('stale').onclick=()=>{connection='stale';stamp=Date.now()-35*60000;display()};$('recover').onclick=()=>{connection='fresh';stamp=Date.now();data.soc=81;data.voltage=13.17;data.solar=231;display()};
+try{const p=JSON.parse(localStorage.getItem(profileKey)||'{}');for(const id of fields)if(typeof p[id]==='string')$(id).value=p[id]}catch{}
+$('save').onclick=()=>{try{localStorage.setItem(profileKey,JSON.stringify(profile()));$('saveStatus').textContent='Profile saved on this device ✓'}catch{$('saveStatus').textContent='Could not save profile in this browser.'}};
+function respond(){
+ const q=$('question').value.trim();if(!q)return;
+ const es=$('lang').value==='es-ES';
+ let reply;
+ if(window.SCCJayContext&&typeof window.SCCJayContext.answer==='function'){
+  reply=window.SCCJayContext.answer(q,profile(),data,connection,$('lang').value);
+ }else{
+  reply=es?'Motor contextual no disponible. No puedo verificar una respuesta.':'Context engine unavailable. Cannot verify an answer.';
+ }
+ lastAnswer=reply;
+ $('answer').textContent='Jay AI (prototype): '+reply;
+ rememberJay(q,reply);
+}
+$('ask').onclick=respond;$('question').onkeydown=e=>{if(e.key==='Enter')respond()};document.querySelectorAll('.prompt').forEach(b=>b.onclick=()=>{$('question').value=b.dataset.question;respond()});
+const historyKey='scc-v5-jay-history';
+function readJayHistory(){try{const v=JSON.parse(localStorage.getItem(historyKey)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.q==='string'&&typeof x.a==='string').slice(-20):[]}catch{return []}}
+function paintJayHistory(){const el=$('jayHistory');el.replaceChildren();for(const entry of readJayHistory().slice().reverse()){const li=document.createElement('li');li.textContent=entry.q+' — '+entry.a;el.append(li)}}
+function rememberJay(q,a){try{const list=readJayHistory();list.push({q:q.slice(0,250),a:a.slice(0,800)});localStorage.setItem(historyKey,JSON.stringify(list.slice(-20)))}catch{}paintJayHistory()}
+$('clearHistory').onclick=()=>{try{localStorage.removeItem(historyKey)}catch{}paintJayHistory()};
+paintJayHistory();
+const speechSession=typeof createSpeechSession==='function'
+ ? createSpeechSession(t=>{$('question').value=t;respond()},s=>$('voiceStatus').textContent=s,()=>$('lang').value)
+ : null;
+$('lang').onchange=()=>{if(speechSession)speechSession.stop();$('voiceStatus').textContent='Language changed. Tap Talk for the next question.'};
+$('talk').onclick=()=>{if(!speechSession){$('voiceStatus').textContent='Voice module unavailable. Use the keyboard.';return}speechSession.start()};
+$('speak').onclick=()=>{if(!lastAnswer)return;if(!('speechSynthesis'in window)){$('voiceStatus').textContent='Voice playback not supported.';return}try{speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(lastAnswer);utterance.lang=$('lang').value;utterance.rate=.95;utterance.onerror=()=>{$('voiceStatus').textContent='Speech playback failed. Text response is available.'};speechSynthesis.speak(utterance)}catch{$('voiceStatus').textContent='Speech playback failed.'}};
+const dbName='scc-5-pilot-photos';function transaction(mode,action){return new Promise((resolve,reject)=>{if(!('indexedDB'in window))return reject(Error('IndexedDB unavailable'));const o=indexedDB.open(dbName,1);o.onupgradeneeded=()=>o.result.createObjectStore('photos',{keyPath:'id'});o.onerror=()=>reject(o.error);o.onsuccess=()=>{const db=o.result;const tx=db.transaction('photos',mode);let val;const req=action(tx.objectStore('photos'));req.onsuccess=()=>val=req.result;tx.oncomplete=()=>{db.close();resolve(val)};tx.onerror=()=>{db.close();reject(tx.error)}}})}
+async function refreshGallery(){urls.forEach(u=>URL.revokeObjectURL(u));urls=[];try{const all=await transaction('readonly',s=>s.getAll());$('gallery').replaceChildren();for(const item of all){const url=URL.createObjectURL(item.blob);urls.push(url);const div=document.createElement('div');div.className='photo';const img=document.createElement('img');img.src=url;img.alt=item.name;img.onerror=()=>{img.alt='Photo format cannot be displayed by this browser';$('photoStatus').textContent='One saved photo cannot be displayed. Try JPEG or PNG.'};const choose=document.createElement('button');choose.textContent='Show + pin';choose.onclick=()=>showStage(item);const rm=document.createElement('button');rm.className='secondary';rm.textContent='Remove';rm.onclick=async()=>{await transaction('readwrite',s=>s.delete(item.id));if(activePhoto&&activePhoto.id===item.id){activePhoto=null;activeImage=null;pins=[];if(stageUrl)URL.revokeObjectURL(stageUrl);stageUrl=null;$('stage').replaceChildren();$('stage').textContent='Select a photo to annotate.'}await refreshGallery()};div.append(img,choose,rm);$('gallery').append(div)}$('photoStatus').textContent=all.length+' image(s) saved on this device.'}catch(e){$('photoStatus').textContent='Photo storage unavailable: '+e.message}}
+$('photos').onchange=async()=>{const files=[...$('photos').files];if(!files.length)return;try{const existing=await transaction('readonly',s=>s.getAll());if(existing.length+files.length>6){$('photoStatus').textContent='Maximum 6 photos. Remove an older photo first.';return}for(const f of files){if(!f.type.startsWith('image/')||f.size>12*1024*1024){$('photoStatus').textContent='Use image files smaller than 12 MB.';continue}await transaction('readwrite',s=>s.put({id:String(Date.now())+'-'+Math.random().toString(36).slice(2),name:f.name,blob:f}))}await refreshGallery();const saved=await transaction('readonly',store=>store.getAll());if(saved.length){showStage(saved[saved.length-1]);$('photoStatus').textContent=saved.length+' image(s) saved on this device. Latest photo opened in Equipment Map below.';}}catch(e){$('photoStatus').textContent='Could not save photos: '+e.message}$('photos').value=''};
+/* Experimental pure marker operations; no browser APIs, VRM calls, or writes. */
+(function(root){
+'use strict';
+function clamp(v){return Math.max(0,Math.min(100,Number(v)))}
+function point(x,y){if(!Number.isFinite(Number(x))||!Number.isFinite(Number(y)))throw Error('Invalid marker coordinates');return {x:clamp(x),y:clamp(y)}}
+function list(pins){return Array.isArray(pins)?pins.filter(p=>p&&typeof p.label==='string'&&Number.isFinite(Number(p.x))&&Number.isFinite(Number(p.y))).map(p=>({label:p.label,...point(p.x,p.y)})):[]}
+function add(pins,label,x,y){if(typeof label!=='string'||!label.trim())throw Error('Equipment label required');return [...list(pins),{label:label.trim().slice(0,100),...point(x,y)}]}
+function move(pins,index,x,y){const copy=list(pins);if(!Number.isInteger(index)||index<0||index>=copy.length)throw Error('Marker not found');copy[index]={...copy[index],...point(x,y)};return copy}
+function remove(pins,index){const copy=list(pins);if(!Number.isInteger(index)||index<0||index>=copy.length)throw Error('Marker not found');copy.splice(index,1);return copy}
+root.SCCEquipmentPins=Object.freeze({list,add,move,remove});
+})(typeof window!=='undefined'?window:globalThis);
+
+let selectedPin=-1;
+function showStage(item){activePhoto=item;pins=SCCEquipmentPins.list(item.pins);selectedPin=-1;movingPin=false;if(stageUrl)URL.revokeObjectURL(stageUrl);stageUrl=URL.createObjectURL(item.blob);const el=$('stage');el.replaceChildren();const im=document.createElement('img');im.src=stageUrl;im.alt='Caravan photo';el.append(im);paintPins();}
+
+function pinStatus(message){$('pinEditStatus').textContent=message}
+function paintPins(){document.querySelectorAll('#stage .pin').forEach(p=>p.remove());pins=SCCEquipmentPins.list(pins);pins.forEach((pin,i)=>{const b=document.createElement('button');b.type='button';b.className='pin';b.textContent=pin.label;b.style.left=pin.x+'%';b.style.top=pin.y+'%';b.style.transform='translate(-50%,-50%)';b.setAttribute('aria-label','Select '+pin.label+' marker');b.setAttribute('aria-pressed',String(selectedPin===i));if(selectedPin===i)b.style.outline='3px solid white';b.style.touchAction='none';let down=null;b.onpointerdown=e=>{if(e.button!==0&&e.pointerType==='mouse')return;e.stopPropagation();down={x:e.clientX,y:e.clientY};selectedPin=i;b.setPointerCapture(e.pointerId);b.style.opacity='.8'};b.onpointermove=e=>{if(!down)return;e.stopPropagation();const pt=pinPoint(e);if(pt.x>=0&&pt.x<=100&&pt.y>=0&&pt.y<=100){b.style.left=pt.x+'%';b.style.top=pt.y+'%'}};b.onpointerup=async e=>{if(!down)return;e.stopPropagation();const moved=Math.hypot(e.clientX-down.x,e.clientY-down.y)>8;down=null;b.style.opacity='1';if(moved){const pt=pinPoint(e);try{pins=SCCEquipmentPins.move(pins,i,pt.x,pt.y);await persistPins();pinStatus('Marker dragged and saved.')}catch(err){pinStatus(err.message)}}else pinStatus('Marker selected. Drag it to move, or tap Move selected and then the photo.');paintPins()};b.onpointercancel=()=>{down=null;paintPins()};b.onclick=e=>{e.stopPropagation()};$('stage').append(b)})}
+function pinPoint(e){const box=$('stage').getBoundingClientRect();return {x:(e.clientX-box.left)/box.width*100,y:(e.clientY-box.top)/box.height*100}}
+let movingPin=false;
+$('movePin').onclick=()=>{if(selectedPin<0){pinStatus('Select a marker first.');return}movingPin=true;pinStatus('Tap the new position in the photo to move the selected marker.')};
+$('deletePin').onclick=async()=>{if(selectedPin<0){pinStatus('Select a marker first.');return}pins=SCCEquipmentPins.remove(pins,selectedPin);selectedPin=-1;movingPin=false;paintPins();await persistPins();pinStatus('Selected marker deleted; other markers kept.')};
+$('stage').onclick=async e=>{if(!activePhoto||e.target.closest('.pin'))return;const pt=pinPoint(e);if(pt.x<0||pt.x>100||pt.y<0||pt.y>100)return;try{if(movingPin&&selectedPin>=0){pins=SCCEquipmentPins.move(pins,selectedPin,pt.x,pt.y);movingPin=false;pinStatus('Marker moved and saved.')}else{pins=SCCEquipmentPins.add(pins,$('markerType').value,pt.x,pt.y);selectedPin=pins.length-1;pinStatus('Marker added. Select Move selected to reposition it.')}paintPins();await persistPins()}catch(err){pinStatus(err.message)}};
+$('clearPins').onclick=async()=>{if(!pins.length){pinStatus('No markers to clear.');return}if(!confirm('Delete ALL markers from this photo?'))return;pins=[];selectedPin=-1;movingPin=false;paintPins();await persistPins();pinStatus('All markers removed from this photo.')};
+display();refreshGallery();
+
+const captures=['Front exterior','Left side exterior','Right side exterior','Rear exterior','Interior toward front','Interior toward rear'];
+// Six guided views are stored in the existing local photo database, never uploaded.
+const captureIds=captures.map((_,i)=>'guided-view-'+i);
+let captureUrls=[];
+async function drawCapture(){
+ const container=$('captureList');container.replaceChildren();
+ captureUrls.forEach(u=>URL.revokeObjectURL(u));captureUrls=[];
+ let all;try{all=await transaction('readonly',store=>store.getAll())}catch(e){$('captureProgress').textContent='Photo storage unavailable: '+e.message;return}
+ let done=0;
+ captures.forEach((title,i)=>{
+  const saved=all.find(p=>p.id===captureIds[i]);if(saved)done++;
+  const card=document.createElement('div');card.className='photo';card.style.marginBottom='12px';
+  const heading=document.createElement('strong');heading.textContent=(i+1)+'. '+title+(saved?' ✓':' — not captured');
+  const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('aria-label','Take or choose photo for '+title);
+  // iOS Safari offers Take Photo or Photo Library for image inputs.
+  input.onchange=async()=>{const file=input.files&&input.files[0];if(!file)return;
+   if(!file.type.startsWith('image/')||file.size>12*1024*1024){$('captureProgress').textContent='Use an image smaller than 12 MB.';return}
+   try{
+    const previous=await transaction('readonly',store=>store.get(captureIds[i]));
+    await transaction('readwrite',store=>store.put({id:captureIds[i],name:title,blob:file,pins:previous&&previous.pins||[],guidedView:i}));
+    await refreshGallery();await drawCapture();
+    const current=await transaction('readonly',store=>store.get(captureIds[i]));if(current)showStage(current);
+    $('captureProgress').textContent='Saved '+title+'. Opened in Equipment Map below.';
+   }catch(e){$('captureProgress').textContent='Could not save '+title+': '+e.message}
+  };
+  card.append(heading,input);
+  if(saved){
+   const url=URL.createObjectURL(saved.blob);captureUrls.push(url);
+   const preview=document.createElement('img');preview.src=url;preview.alt=title;preview.style.cssText='width:100%;max-height:150px;object-fit:contain';/* Preview intentionally hidden in capture workflow */
+   const open=document.createElement('button');open.type='button';open.textContent='Open + annotate';open.onclick=()=>showStage(saved);
+   const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='Remove this view';remove.onclick=async()=>{if(!confirm('Remove '+title+' photo and its markers?'))return;await transaction('readwrite',store=>store.delete(captureIds[i]));if(activePhoto&&activePhoto.id===captureIds[i]){activePhoto=null;pins=[];$('stage').replaceChildren();$('stage').textContent='Select a photo to annotate.'}await refreshGallery();await drawCapture()};
+   card.append(open,remove);
+  }
+  container.append(card);
+ });
+ $('captureProgress').textContent=done+' of 6 guided views saved locally. Select a slot to take or choose a photo.';
+ drawTwin(all);
+}
+async function makePhotoSheet(){
+ const all=await transaction('readonly',s=>s.getAll()),canvas=$('twinSheet'),ctx=canvas.getContext('2d');
+ const spots=[[410,60,380,220],[20,300,560,240],[620,300,560,240],[410,630,380,220],[20,630,360,220],[820,630,360,220]];
+ ctx.fillStyle='#0b2434';ctx.fillRect(0,0,1200,900);ctx.fillStyle='#fff';ctx.font='bold 28px sans-serif';ctx.fillText('MY CARAVAN — 2D PHOTO SHEET',22,36);
+ let count=0;
+ for(let i=0;i<6;i++){
+  const [x,y,w,h]=spots[i],item=all.find(p=>p.id===captureIds[i]);
+  ctx.fillStyle='#19435a';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#8ccbd1';ctx.strokeRect(x,y,w,h);
+  ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';ctx.fillText(captures[i],x+10,y+22);
+  if(!item)continue;
+  const url=URL.createObjectURL(item.blob),im=new Image();
+  try{
+   await new Promise((ok,fail)=>{im.onload=ok;im.onerror=fail;im.src=url});
+   const k=Math.min((w-12)/im.width,(h-45)/im.height),iw=im.width*k,ih=im.height*k,px=x+(w-iw)/2,py=y+35+(h-42-ih)/2;
+   ctx.drawImage(im,px,py,iw,ih);
+   for(const p of SCCEquipmentPins.list(item.pins)){
+    const mx=px+iw*p.x/100,my=py+ih*p.y/100;
+    ctx.fillStyle='#24d9ad';ctx.beginPath();ctx.arc(mx,my,7,0,Math.PI*2);ctx.fill();
+    ctx.font='bold 14px sans-serif';ctx.fillStyle='#fff';ctx.fillText(p.label.slice(0,18),Math.min(mx+8,x+w-130),Math.max(py+15,my-9));
+   }
+   count++;
+  }catch(e){ctx.fillStyle='#fff';ctx.fillText('Photo unavailable',x+12,y+60)}
+  finally{URL.revokeObjectURL(url)}
+ }
+ ctx.fillStyle='#bcd5df';ctx.font='16px sans-serif';ctx.fillText('Photo composite — not to scale — equipment positions manually recorded',22,887);
+ $('exportSheet').disabled=count===0;
+ $('twinStatus').textContent=count+' of 6 views combined into one 2D image.';
+}
+$('makeSheet').onclick=async()=>{try{await makePhotoSheet()}catch(e){$('twinStatus').textContent='2D generation failed: '+e.message}};
+$('exportSheet').onclick=()=>{$('twinSheet').toBlob(blob=>{if(!blob)return;const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='my-caravan-2d.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),3000)},'image/png')};
+function drawTwin(all){
+ const box=$('twinViews');box.replaceChildren();let count=0;
+ captures.forEach((title,i)=>{
+  const saved=all.find(item=>item.id===captureIds[i]);
+  const card=document.createElement('div');card.className='photo';
+  const label=document.createElement('p');label.textContent=(i+1)+'. '+title;card.append(label);
+  if(saved){
+   count++;const preview=document.createElement('img');const url=URL.createObjectURL(saved.blob);captureUrls.push(url);preview.src=url;preview.alt='Real photo: '+title;card.append(preview);
+   const open=document.createElement('button');open.type='button';open.textContent='Explore this view';open.onclick=()=>{showStage(saved);$('stage').scrollIntoView({behavior:'smooth',block:'center'});$('twinStatus').textContent='Viewing '+title+' — equipment markers are editable in Equipment Map.'};card.append(open);
+  }else{
+   const missing=document.createElement('p');missing.className='muted';missing.textContent='No photo yet';card.append(missing);
+   const jump=document.createElement('button');jump.type='button';jump.className='secondary';jump.textContent='Add this view';jump.onclick=()=>{$('captureList').children[i]?.querySelector('input[type=file]')?.click()};card.append(jump);
+  }
+  box.append(card);
+ });
+ $('twinStatus').textContent=count+' of 6 real photo views available. Markers are stored per photo.';
+}
+$('resetCapture').textContent='Remove all six guided photos';
+$('resetCapture').onclick=async()=>{if(!confirm('Remove all six guided photos and their markers?'))return;try{for(const id of captureIds)await transaction('readwrite',store=>store.delete(id));if(activePhoto&&captureIds.includes(activePhoto.id)){activePhoto=null;pins=[];$('stage').replaceChildren();$('stage').textContent='Select a photo to annotate.'}await refreshGallery();await drawCapture()}catch(e){$('captureProgress').textContent=e.message}};
+$('estimate').onclick=()=>{const cap=Number($('capacity').value),soc=Number($('manualSoc').value),load=Number($('manualLoad').value);if(!Number.isFinite(cap)||cap<=0||cap>100000||!Number.isFinite(soc)||soc<0||soc>100||!Number.isFinite(load)||load<0||load>20000){$('autonomyResult').textContent='Check all input values.';return}if(load===0){$('autonomyResult').textContent='No net discharge entered; remaining time cannot be calculated from these values.';return}const hours=cap*soc/100/load;$('autonomyResult').textContent='Estimated '+hours.toFixed(1)+' hours at constant '+load+' W discharge. Manual inputs only; temperature, losses, battery limits and variable loads can change this estimate.'};drawCapture();
+</script></body></html>

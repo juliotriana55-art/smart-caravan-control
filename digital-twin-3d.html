@@ -1,0 +1,39 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smart Caravan Control — Digital Twin 3D</title><style>body{margin:0;background:#081b2b;color:#eaf8ff;font:16px system-ui}main{max-width:980px;margin:auto;padding:18px}h1{font-size:1.6rem}p{line-height:1.5;color:#c2dbe4}.panel{background:#143348;border:1px solid #386077;border-radius:15px;padding:14px;margin:12px 0}#viewport{width:100%;height:430px;touch-action:none;border-radius:12px;background:#0b293b}button,input{font:inherit;padding:11px;border-radius:10px;border:1px solid #6993a5}button{background:#43d5ba;color:#072334;font-weight:700;margin:4px}label{display:inline-block;margin:8px}input{width:90px;background:#082337;color:white}#status{color:#f7cf95}.note{font-size:.9rem}</style></head><body><main><h1>🚐 Digital Twin 3D — Smart Caravan Control</h1><p>Modelo tridimensional interactivo basado en las fotos guardadas en este navegador. Puedes girarlo con el dedo. <strong>La geometría es aproximada, no una reconstrucción 3D automática.</strong></p><section class="panel"><div id="viewport" aria-label="Modelo tridimensional interactivo"></div><div><button id="left">↶ Girar</button><button id="right">Girar ↷</button><button id="reset">Restablecer vista</button><button id="roof">Ver techo</button></div><p id="status" role="status">Preparando modelo 3D…</p></section><section class="panel"><h2>Dimensiones aproximadas (metros)</h2><label>Largo <input id="length" type="number" min="3" max="12" step=".1" value="7.2"></label><label>Ancho <input id="width" type="number" min="1.5" max="3.5" step=".1" value="2.4"></label><label>Alto <input id="height" type="number" min="1.8" max="4" step=".1" value="2.8"></label><button id="rebuild">Actualizar modelo</button><p class="note">Las imágenes frontales, laterales y trasera se aplican a las superficies del modelo. Las dos fotos interiores quedan disponibles en el visor fotográfico del piloto. Los marcadores del mapa siguen guardados por fotografía.</p></section><p><a style="color:#67e5d0" href="./pilot-5.html">← Volver a Smart Caravan Control 5.0</a></p></main><script type="module">
+const $=id=>document.getElementById(id),status=$('status');
+let THREE,renderer,scene,camera,car,angle=.7,elevation=.25,zoom=17,drag=null;
+function dbPhotos(){return new Promise((resolve,reject)=>{const req=indexedDB.open('scc-5-pilot-photos',1);req.onupgradeneeded=()=>req.result.createObjectStore('photos',{keyPath:'id'});req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('photos','readonly'),q=tx.objectStore('photos').getAll();q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);tx.oncomplete=()=>db.close()}})}
+async function texture(blob){if(!blob)return null;const u=URL.createObjectURL(blob);try{const im=await new Promise((ok,fail)=>{const img=new Image();img.onload=()=>ok(img);img.onerror=fail;img.src=u});const t=new THREE.Texture(im);t.colorSpace=THREE.SRGBColorSpace;t.needsUpdate=true;return t}finally{URL.revokeObjectURL(u)}}
+function material(t){return new THREE.MeshStandardMaterial({map:t||null,color:t?0xffffff:0xc9d3d9,roughness:.78})}
+function mesh(geo,mat,x,y,z){const o=new THREE.Mesh(geo,mat);o.position.set(x,y,z);car.add(o);return o}
+async function rebuild(){
+ const values=['length','width','height'].map(id=>Number($(id).value));
+ if(values.some((n,i)=>!Number.isFinite(n)||n<[[3,12],[1.5,3.5],[1.8,4]][i][0]||n>[[3,12],[1.5,3.5],[1.8,4]][i][1])){status.textContent='Revisa las dimensiones.';return}
+ const [l,w,h]=values;const all=await dbPhotos();const find=i=>all.find(x=>x.id==='guided-view-'+i);
+ const ts=await Promise.all([2,1,4,0,3].map(async i=>{try{return await texture(find(i)?.blob)}catch{return null}}));
+ if(car){scene.remove(car);car.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}})}
+ car=new THREE.Group();scene.add(car);
+ const body=new THREE.BoxGeometry(l,h,w);
+ // Box faces: +x rear, -x front, +z right, -z left, top, bottom.
+ const mats=[material(ts[4]),material(ts[3]),material(null),material(null),material(ts[0]),material(ts[1])];
+ // BoxGeometry order +x,-x,+y,-y,+z,-z
+ const sides=[material(ts[4]),material(ts[3]),material(null),material(null),material(ts[0]),material(ts[1])];
+ mesh(body,sides,0,h/2+.65,0);
+ const dark=material(null);dark.color.set('#202a33');
+ for(const x of [-l*.26,l*.26])for(const z of [-w*.53,w*.53]){const wheel=mesh(new THREE.CylinderGeometry(.47,.47,.2,20),dark,x,.5,z);wheel.rotation.x=Math.PI/2}
+ const hitch=mesh(new THREE.BoxGeometry(1.4,.12,.14),dark,-l/2-.65,.65,0);hitch.rotation.y=0;
+ const used=[0,1,2,3].filter(i=>!!find(i)).length;
+ status.textContent='Modelo 3D listo. '+used+' de 4 vistas exteriores encontradas en este navegador. Arrastra para girar.';
+ draw();
+}
+function draw(){if(!renderer)return;camera.position.set(Math.cos(angle)*Math.cos(elevation)*zoom,Math.sin(elevation)*zoom+1,Math.sin(angle)*Math.cos(elevation)*zoom);camera.lookAt(0,1.7,0);renderer.render(scene,camera)}
+try{
+ THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/+esm');
+ scene=new THREE.Scene();scene.background=new THREE.Color('#102e41');scene.add(new THREE.HemisphereLight(0xffffff,0x385166,2.1));const sun=new THREE.DirectionalLight(0xffffff,2);sun.position.set(4,10,7);scene.add(sun);
+ camera=new THREE.PerspectiveCamera(42,1,.1,100);
+ renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));$('viewport').append(renderer.domElement);
+ function resize(){const box=$('viewport');renderer.setSize(box.clientWidth,box.clientHeight,false);renderer.domElement.style.width='100%';renderer.domElement.style.height='100%';camera.aspect=box.clientWidth/box.clientHeight;camera.updateProjectionMatrix();draw()}
+ window.addEventListener('resize',resize);resize();await rebuild();
+ const v=$('viewport');v.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};v.setPointerCapture(e.pointerId)});v.addEventListener('pointermove',e=>{if(!drag)return;angle+=(e.clientX-drag.x)*.012;elevation=Math.max(-.05,Math.min(1.25,elevation+(drag.y-e.clientY)*.008));drag={x:e.clientX,y:e.clientY};draw()});v.addEventListener('pointerup',()=>drag=null);v.addEventListener('pointercancel',()=>drag=null);
+ $('left').onclick=()=>{angle-=.45;draw()};$('right').onclick=()=>{angle+=.45;draw()};$('reset').onclick=()=>{angle=.7;elevation=.25;draw()};$('roof').onclick=()=>{elevation=1.25;draw()};$('rebuild').onclick=()=>rebuild().catch(e=>status.textContent=e.message);
+}catch(e){status.textContent='No se pudo iniciar WebGL/Three.js: '+e.message+'. Comprueba internet y Safari.'}
+</script></body></html>
