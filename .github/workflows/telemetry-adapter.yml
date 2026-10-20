@@ -1,0 +1,15 @@
+name: Telemetry adapter checks
+on:
+  push:
+    branches: ['staging/**']
+permissions:
+  contents: read
+jobs:
+  telemetry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test staging/telemetry-adapter.test.mjs tests/jay-missing-metrics.test.mjs
