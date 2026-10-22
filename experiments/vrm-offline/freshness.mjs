@@ -4,7 +4,7 @@
  */
 export const MAX_FRESH_AGE_MS = 15 * 60 * 1000;
 export const MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
-export const METRIC_KEYS = Object.freeze(['soc', 'voltage', 'current', 'solarWatts', 'dcPower', 'waterPct']);
+export const METRIC_KEYS = Object.freeze(['soc', 'voltage', 'current', 'solarWatts', 'dcPower', 'acLoadsWatts', 'waterPct']);
 export const VALID_INVERTER = Object.freeze(['on', 'off']);
 
 /**
@@ -24,7 +24,22 @@ export function sanitizeMetrics(data) {
     cleaned[key] = typeof data[key] === 'number' && Number.isFinite(data[key]) ? data[key] : null;
   }
   cleaned.inverter = VALID_INVERTER.includes(data.inverter) ? data.inverter : null;
-  return Object.values(cleaned).some(value => value !== null) ? cleaned : null;
+  const tanks = new Map();
+  if (Array.isArray(data.tanks)) {
+    for (const tank of data.tanks.slice(0, 32)) {
+      if (!tank || typeof tank !== 'object' || Array.isArray(tank)) continue;
+      const name = typeof tank.name === 'string' ? tank.name.trim() : '';
+      const percentage = tank.percentage;
+      if (!name || name.length > 80 || typeof percentage !== 'number' ||
+          !Number.isFinite(percentage) || percentage < 0 || percentage > 100) continue;
+      const updated = Number.isFinite(parseSourceTimestamp(tank.updated)) ? tank.updated : null;
+      if (!tanks.has(name.toLowerCase())) tanks.set(name.toLowerCase(), { name, percentage, updated });
+    }
+  }
+  cleaned.tanks = [...tanks.values()];
+  const hasReading = METRIC_KEYS.some(key => cleaned[key] !== null) ||
+    cleaned.inverter !== null || cleaned.tanks.length > 0;
+  return hasReading ? cleaned : null;
 }
 
 /**
