@@ -18,6 +18,24 @@ function normalize(diag,{nowSeconds=Date.now()/1000,maxAgeSeconds=900}={}){
  pick('acLoadsWatts',['P','Pac','acPower','acLoad'],/ac\s*loads?|ac\s*power|consumption/i,v=>v>=0);
  // /Mode (selected switch position) and /State (operating state) have different enums.
  const isVebus=r=>/multiplus|quattro|ve[.\s-]*bus/i.test(label(r));
+ // A VE.Bus output is the caravan AC load only for a complete, identified
+ // output group. Never use input power, apparent V*A, or a partial phase sum.
+ if(lastData.acLoadsWatts===null){
+  const groups=new Map();
+  for(const r of rows.filter(isVebus)){const id=String(r.instance??'default');if(!groups.has(id))groups.set(id,[]);groups.get(id).push(r);}
+  const complete=[];
+  for(const group of groups.values()){
+   const latest=code=>group.filter(r=>String(r.code)===code).sort((a,b)=>b._time-a._time)[0];
+   const countRow=latest('PC'),count=countRow&&number(countRow.rawValue??countRow.value);
+   if(![1,2,3].includes(count))continue;
+   const phases=Array.from({length:count},(_,i)=>latest('OP'+(i+1)));
+   if(phases.some(r=>!r||number(r.rawValue??r.value)===null||number(r.rawValue??r.value)<0))continue;
+   const times=phases.map(r=>r._time);if(Math.max(...times)-Math.min(...times)>60)continue;
+   complete.push({value:phases.reduce((sum,r)=>sum+number(r.rawValue??r.value),0),time:Math.min(...times)});
+  }
+  // Multiple inverter groups need explicit system aggregation; do not choose one.
+  if(complete.length===1){lastData.acLoadsWatts=complete[0].value;fieldTimes.acLoadsWatts=new Date(complete[0].time*1000).toISOString();selected.push(complete[0].time);}
+ }
  const isSelectedMode=r=>/^(?:MODE|Mode|mode|\/Mode|SwitchPosition|switchPosition)$/.test(String(r.code??''))||/switch\s*(?:position|mode)|(?:inverter|charger|ve[.\s-]*bus)\s+(?:switch\s+)?mode/i.test(label(r));
  const selectedModes=rows.filter(r=>isVebus(r)&&isSelectedMode(r)).sort((a,b)=>b._time-a._time);
  const selectedMode=selectedModes[0];
@@ -40,6 +58,6 @@ function sanitize(data){const out=blank();if(!data||typeof data!=='object'||Arra
  out.tanks=Array.isArray(data.tanks)?data.tanks.filter(t=>t&&typeof t.name==='string'&&t.name.length<=80&&Number.isFinite(t.percentage)&&t.percentage>=0&&t.percentage<=100).slice(0,12).map(t=>({name:t.name,percentage:t.percentage,updated:typeof t.updated==='string'?t.updated:null})):[];return out;}
 function current(data,fieldTimes,nowSeconds=Date.now()/1000,maxAgeSeconds=900){const out=sanitize(data);if(!fieldTimes||!Object.keys(fieldTimes).length)return out;for(const key of keys){const t=seconds(fieldTimes[key]);if(!t||t>nowSeconds||nowSeconds-t>maxAgeSeconds)out[key]=null;}out.tanks=out.tanks.filter(t=>{const n=seconds(t.updated||fieldTimes['tank:'+t.name]);return n&&n<=nowSeconds&&nowSeconds-n<=maxAgeSeconds});return out;}
 // A bounded local-only inventory helps map real installations. Never includes raw text values, credentials or GPS.
-function inventory(diag){return (Array.isArray(diag?.records)?diag.records:[]).filter(r=>r&&typeof r==='object').filter(r=>/\b(?:ac|dc)\b|water|tank|level|switch|mode|inverter|ve[.\s-]*bus|consump|power|battery|solar/i.test(label(r))&&!/token|password|secret|api.?key|serial|latitude|longitude|gps|portal/i.test(label(r)+' '+String(r.code??''))).slice(0,80).map(r=>{const code=String(r.code??'');const t=seconds(r.timestamp);return {code:/^[a-zA-Z0-9_/.:-]{1,24}$/.test(code)?code:'unlisted',description:String(r.description??'').replace(/[a-f0-9]{24,}/gi,'[redacted]').slice(0,120),instance:Number.isInteger(number(r.instance))?number(r.instance):null,value:number(r.rawValue??r.value),updated:t>0&&t<Date.now()/1000+86400?new Date(t*1000).toISOString():null}})}
+function inventory(diag){return (Array.isArray(diag?.records)?diag.records:[]).filter(r=>r&&typeof r==='object').filter(r=>/\b(?:ac|dc)\b|water|tank|level|switch|mode|inverter|ve[.\s-]*bus|consump|power|battery|solar|output|phase count/i.test(String(r.description??''))||/^(?:OP[123]|PC|Pdc|dcPower|TL|tankLevel|tank_level|percentage|Percent)$/.test(String(r.code??''))).filter(r=>!/token|password|secret|api.?key|access|serial|latitude|longitude|gps|portal/i.test(label(r)+' '+String(r.code??''))).slice(0,512).map(r=>{const code=String(r.code??'');const t=seconds(r.timestamp);return {code:/^[a-zA-Z0-9_/.:-]{1,24}$/.test(code)?code:'unlisted',description:String(r.description??'').replace(/[a-f0-9]{24,}/gi,'[redacted]').slice(0,120),deviceClass:/multiplus|quattro|ve[.\s-]*bus/i.test(label(r))?'VE.Bus':/tank/i.test(label(r))?'tank':null,instance:Number.isInteger(number(r.instance))?number(r.instance):null,value:number(r.rawValue??r.value),updated:t>0&&t<Date.now()/1000+86400?new Date(t*1000).toISOString():null}})}
 root.SCCTelemetry={normalize,sanitize,current,seconds,blank,inventory};if(typeof module!=='undefined')module.exports=root.SCCTelemetry;
 })(globalThis);

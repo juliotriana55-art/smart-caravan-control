@@ -1,5 +1,5 @@
 /* Offline application shell only. API requests and credentials are never cached. */
-const CACHE='scc-shell-20261028-5';
+const CACHE='scc-shell-20261028-6';
 const FILES=['./','./index.html','./staging/runtime.js','./staging/telemetry-core.js','./staging/telemetry-client.js','./staging/local-assets.js','./staging/telemetry-adapter.mjs','./experiments/vrm-fields/iso-normalized.mjs','./experiments/vrm-fields/iso-time.mjs','./experiments/vrm-fields/parser.mjs','./exterior-3d.html','./pilot-5.html','./experiments/jay-ai/contextual-answer.js','./experiments/jay-ai/safari-speech-session.js'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('scc-shell-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
