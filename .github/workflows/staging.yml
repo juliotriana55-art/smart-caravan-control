@@ -20,4 +20,7 @@ jobs:
       - name: Python smoke tests
         run: python3 -m unittest discover -s tests -p 'test_*.py' -v
       - name: JavaScript tests
-        run: node --test experiments/vrm-fields/*.test.mjs experiments/vrm-offline/*.test.mjs tests/*.test.cjs tests/*.test.mjs
+        run: node --test experiments/vrm-fields/*.test.mjs experiments/vrm-offline/*.test.mjs staging/*.test.mjs tests/*.test.cjs tests/*.test.mjs
+      - name: Integrated runtime scenarios
+        run: node tests/app-runtime.cjs
+

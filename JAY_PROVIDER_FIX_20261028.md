@@ -1,0 +1,7 @@
+# 5.2.7: Gemini generation failure and visible request errors
+
+Real Site logs showed POST /api/jay/chat returning 502 repeatedly. A direct server-side request using the configured key returned HTTP 404 NOT_FOUND for gemini-2.5-flash-lite. Listing models returned HTTP 200 and included that model; catalog availability alone did not establish generation availability. A generation request using gemini-3.1-flash-lite returned HTTP 200, finishReason STOP and nonempty content. The owner's AI Studio quota page showed a free allowance for this model. The private staging runtime model was updated; no billing was enabled. These checks used a synthetic “Reply with OK” prompt, not caravan telemetry or a physical hardware test. No key values or raw provider error bodies are included here.
+
+The frontend now places pending status in the reply area. Provider failures appear there too and preserve the question in the text field. The gateway distinguishes provider HTTP 404 as AI_MODEL_UNAVAILABLE rather than a generic provider error. The original local-rule assistant and telemetry remain available. Production Worker and main are unchanged.
+
+Validation: 187 Node tests, 14 Python tests and app-runtime mocked integration checks passed. Logs in test-results/*-jay-fix-20261028.txt. Real provider smoke test passed independently as described above; full deployed iPhone conversation and audio remain to be verified.
