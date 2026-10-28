@@ -1,0 +1,19 @@
+test_critical_sections_exist (test_app.AppSmokeTests.test_critical_sections_exist) ... ok
+test_html_document (test_app.AppSmokeTests.test_html_document) ... ok
+test_page_title (test_app.AppSmokeTests.test_page_title) ... ok
+test_user_controls_exist (test_app.AppSmokeTests.test_user_controls_exist) ... ok
+test_no_canned_voice_enabled_speech (test_integrated_pilot.IntegratedPilot.test_no_canned_voice_enabled_speech) ... ok
+test_push_to_talk_present (test_integrated_pilot.IntegratedPilot.test_push_to_talk_present) ... ok
+test_readonly_telemetry (test_integrated_pilot.IntegratedPilot.test_readonly_telemetry) ... ok
+test_tank_dashboard_support (test_integrated_pilot.IntegratedPilot.test_tank_dashboard_support) ... ok
+test_tanks_zero_is_valid (test_integrated_pilot.IntegratedPilot.test_tanks_zero_is_valid) ... ok
+test_key_controls (test_pilot5.Pilot5Tests.test_key_controls) ... ok
+test_no_provider_or_control_calls (test_pilot5.Pilot5Tests.test_no_provider_or_control_calls) ... ok
+test_photo_and_marker_storage (test_pilot5.Pilot5Tests.test_photo_and_marker_storage) ... ok
+test_simulation_clearly_labelled (test_pilot5.Pilot5Tests.test_simulation_clearly_labelled) ... ok
+test_unique_ids (test_pilot5.Pilot5Tests.test_unique_ids) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.006s
+
+OK

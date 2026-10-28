@@ -14,7 +14,7 @@ function normalize(diag,{nowSeconds=Date.now()/1000,maxAgeSeconds=900}={}){
  pick('voltage',['V','bv'],/battery|system|voltage/i,v=>v>=0);
  pick('current',['I'],/battery|system/i);
  pick('solarWatts',['P','ScW','PPV'],/solar charger|pv charger|solar power/i,v=>v>=0);
- pick('dcPower',['Pdc','dcPower'],/dc\s*(system|loads|power)/i);
+ pick('dcPower',['Pdc','dcPower','dc'],/dc\s*(system|loads|power)/i);
  pick('acLoadsWatts',['P','Pac','acPower','acLoad'],/ac\s*loads?|ac\s*power|consumption/i,v=>v>=0);
  // /Mode (selected switch position) and /State (operating state) have different enums.
  const isVebus=r=>/multiplus|quattro|ve[.\s-]*bus/i.test(label(r));
@@ -44,6 +44,23 @@ function normalize(diag,{nowSeconds=Date.now()/1000,maxAgeSeconds=900}={}){
  if(state){const raw=number(state.rawValue);const text=String(state.formattedValue??state.textValue??state.value??state.rawValue??'').trim();const v=isVebus(state)&&raw!==null?(raw===9?'on':raw===0?'off':null):/^(inverting|inverter\s+on)$/i.test(text)?'on':/^(off|inverter\s+off)$/i.test(text)?'off':null;if(v){lastData.inverter=v;fieldTimes.inverter=new Date(state._time*1000).toISOString();selected.push(state._time)}}
  const tanks=new Map();
  for(const r of rows){const desc=label(r);const match=desc.match(/(?:fresh\s*water|waste\s*water|gr[ea]y\s*water|black\s*water)\s*\d+|(?:water\s*)?tank\s*[12]\b/i);if(!match||!/^(T|TL|level|tankLevel|tank_level|percentage|Percent)$/i.test(String(r.code??''))&&!/level|percentage|percent|%/i.test(desc))continue;const value=number(r.rawValue??r.value);const name=match[0].replace(/\s+/g,' ').trim(),key=name.toLowerCase();if(!tanks.has(key)||r._time>tanks.get(key)._time)tanks.set(key,{name,percentage:value,updated:new Date(r._time*1000).toISOString(),_time:r._time});}
+ // Real VRM tank fields are grouped by instance, not a numbered description.
+ // Fluid type 1 identifies fresh water. Missing levels never become zero.
+ const tankGroups=new Map();
+ for(const r of rows){if(!Number.isInteger(number(r.instance))||!['tl','tf','tcn','ts'].includes(String(r.code)))continue;const id=number(r.instance);if(!tankGroups.has(id))tankGroups.set(id,[]);tankGroups.get(id).push(r);}
+ for(const [id,group] of tankGroups){
+  const latest=code=>group.filter(r=>String(r.code)===code).sort((a,b)=>b._time-a._time)[0];
+  const level=latest('tl'),fluid=latest('tf'),status=latest('ts'),custom=latest('tcn');
+  if(!level||!/tank\s*level/i.test(label(level))||!fluid||number(fluid.rawValue??fluid.value)!==1)continue;
+  if(status&&status._time>=level._time&&number(status.rawValue??status.value)!==0)continue;
+  const rawName=custom&&(custom.rawValue??custom.value);
+  const reportedName=label(level).match(/fresh\s*water\s*\d+/i)?.[0];
+  const name=typeof rawName==='string'&&/^fresh\s*water\s*\d+$/i.test(rawName.trim())?rawName.trim():reportedName||('Fresh water (VRM '+id+')');
+  const key='vrm:'+id;
+  // Prefer instance identity over a duplicate legacy named representation.
+  for(const [existingKey,tank] of tanks)if(tank.name.toLowerCase()===name.toLowerCase())tanks.delete(existingKey);
+  tanks.set(key,{name,percentage:number(level.rawValue??level.value),updated:new Date(level._time*1000).toISOString(),_time:level._time});
+ }
  lastData.tanks=[...tanks.values()].filter(t=>t.percentage!==null&&t.percentage>=0&&t.percentage<=100).sort((a,b)=>a.name.localeCompare(b.name)).map(({_time,...t})=>{selected.push(_time);fieldTimes['tank:'+t.name]=t.updated;return t});
  if(lastData.voltage!==null&&lastData.current!==null&&Math.abs(seconds(fieldTimes.voltage)-seconds(fieldTimes.current))<=60){lastData.batteryPower=lastData.voltage*lastData.current;fieldTimes.batteryPower=new Date(Math.min(seconds(fieldTimes.voltage),seconds(fieldTimes.current))*1000).toISOString();}
  const updated=selected.length?new Date(Math.max(...selected)*1000).toISOString():null;
