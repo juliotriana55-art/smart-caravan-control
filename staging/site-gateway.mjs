@@ -1,3 +1,4 @@
+import {createJayGateway} from './jay-ai-gateway.mjs';
 const upstream='https://smart-caravan-api.juliotriana55.workers.dev';
 const errorHeaders={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-type':'application/json; charset=utf-8'};
 function problem(code,status,details={}){return new Response(JSON.stringify({error:{code,stage:'staging-bridge',...details}}),{status,headers:errorHeaders})}
@@ -12,7 +13,8 @@ function upstreamProblem(status,json){
  else if(/^VRM HTTP \d{3}$/.test(message))code='VRM_UPSTREAM_HTTP_ERROR';
  const match=message.match(/^VRM HTTP (\d{3})$/);return {code,stage:'production-worker',httpStatus:status,...(match?{upstreamStatus:Number(match[1])}:{})};
 }
-export function createGateway(assets){return {async fetch(request){
+export function createGateway(assets){const jay=createJayGateway();return {async fetch(request,env={}){
+ const ai=await jay(request,env);if(ai)return ai;
  const u=new URL(request.url);const headers={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer'};
  if(request.method!=='GET')return new Response('Read only',{status:405,headers});
  const routes={'/staging-vrm/telemetry':'/telemetry','/staging-vrm/api/victron/diagnostics':'/api/victron/diagnostics'};
