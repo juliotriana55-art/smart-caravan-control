@@ -1,0 +1,1 @@
+PASS: runtime integration scenarios (fresh/stale/offline, modes, repeated speech, permission recovery, profile, twin, empty telemetry, zero tanks, reconnection, history). Browser APIs mocked; not physical Safari validation.
