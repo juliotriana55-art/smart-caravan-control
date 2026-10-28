@@ -15,3 +15,5 @@ test('context whitelist tolerates null and rejects unknown secrets and nonnumeri
 const context=()=>cleanContext({status:'fresh',profile:{batteryCapacityAh:'400',reserveSocPct:'20'},telemetry:{soc:60,current:-10},fieldTimes:{soc:new Date().toISOString(),current:new Date().toISOString()}});
 test('autonomy is deterministic and states constant-input assumption',()=>{const x=estimateAutonomy(context());assert.equal(x.hours,16);assert.match(x.assumptions,/Not a simulation of unplugging/)});
 test('autonomy asks for missing capacity/reserve and rejects charging/demo/old readings',()=>{for(const change of [c=>c.profile.batteryCapacityAh='',c=>c.profile.reserveSocPct='',c=>c.telemetry.current=0,c=>c.telemetry.current=10,c=>c.status='demo',c=>c.status='offline',c=>c.fieldTimes.current='2020-01-01T00:00:00Z']){const c=context();change(c);assert.equal(estimateAutonomy(c).available,false)}});
+
+test('missing provider model has an actionable error code',async()=>{const r=await createJayGateway(async()=>new Response(null,{status:404}))(req(),env);assert.equal(r.status,502);assert.deepEqual(await r.json(),{error:'AI_MODEL_UNAVAILABLE'})});

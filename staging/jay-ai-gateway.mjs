@@ -47,7 +47,7 @@ export function createJayGateway(fetchImpl=(...args)=>fetch(...args)){
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);busy=true;lastRequest=Date.now();
   try{
    const r=await fetchImpl('https://generativelanguage.googleapis.com/v1beta/models/'+env.JAY_AI_MODEL+':generateContent',{method:'POST',redirect:'manual',signal:controller.signal,headers:{'content-type':'application/json','x-goog-api-key':env.GEMINI_API_KEY},body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig:{maxOutputTokens:900,temperature:0.2}})});
-   if(!r.ok)return reply({error:r.status===429?'AI_QUOTA_EXCEEDED':r.status===401||r.status===403?'AI_ACCESS_DENIED':'AI_PROVIDER_ERROR'},r.status===429?429:502);
+   if(!r.ok)return reply({error:r.status===404?'AI_MODEL_UNAVAILABLE':r.status===429?'AI_QUOTA_EXCEEDED':r.status===401||r.status===403?'AI_ACCESS_DENIED':'AI_PROVIDER_ERROR'},r.status===429?429:502);
    const data=await r.json();const result=data?.candidates?.[0];
    if(!['STOP','MAX_TOKENS'].includes(result?.finishReason))return reply({error:'AI_RESPONSE_UNAVAILABLE'},502);
    const answer=(result?.content?.parts||[]).filter(p=>!p.thought&&typeof p.text==='string').map(p=>p.text).join('\n').trim().slice(0,6000);
